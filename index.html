@@ -609,7 +609,7 @@
         </div>
         <div>
           <div class="chat-title">AI Assistant — Fersa Portal</div>
-          <div class="chat-subtitle">Powered by Claude · Dados atuais do portal</div>
+          <div class="chat-subtitle">Powered by Claude · Live portal data</div>
         </div>
       </div>
       <button class="chat-close" onclick="closeChat()" aria-label="Fechar">
@@ -620,22 +620,22 @@
     <div class="chat-messages" id="chatMessages">
       <div class="msg bot">
         <div class="msg-avatar">AI</div>
-        <div class="msg-bubble">Olá! Sou o assistente de dados do Portal FBRA. Posso responder perguntas sobre <strong>Compras</strong>, <strong>Fill Rate</strong>, <strong>Forecast Accuracy</strong> e outros módulos do portal. Como posso ajudar?</div>
+        <div class="msg-bubble">Hello! I'm the FBRA Portal data assistant. I can answer questions about <strong>Purchases</strong>, <strong>Fill Rate</strong>, <strong>Forecast Accuracy</strong> and other portal modules. How can I help?</div>
       </div>
     </div>
 
     <div class="chat-suggestions" id="chatSuggestions">
-      <button class="suggestion-btn" onclick="sendSuggestion(this)">Qual o total de compras em backorder?</button>
-      <button class="suggestion-btn" onclick="sendSuggestion(this)">Como está o fill rate global?</button>
-      <button class="suggestion-btn" onclick="sendSuggestion(this)">Qual a acurácia do forecast?</button>
-      <button class="suggestion-btn" onclick="sendSuggestion(this)">Quais marcas têm mais compras?</button>
+      <button class="suggestion-btn" onclick="sendSuggestion(this)">What is the total backorder quantity?</button>
+      <button class="suggestion-btn" onclick="sendSuggestion(this)">What is the overall fill rate?</button>
+      <button class="suggestion-btn" onclick="sendSuggestion(this)">What is the forecast accuracy?</button>
+      <button class="suggestion-btn" onclick="sendSuggestion(this)">Which brands have the most purchases?</button>
     </div>
 
     <div class="chat-input-row">
       <textarea
         class="chat-textarea"
         id="chatInput"
-        placeholder="Faça uma pergunta sobre os dados do portal..."
+        placeholder="Ask a question about the portal data..."
         rows="1"
         maxlength="1000"
       ></textarea>
@@ -687,7 +687,7 @@ function appendTyping() {
   const msg = document.createElement('div');
   msg.className = 'msg bot msg-typing';
   msg.id = 'typingIndicator';
-  msg.innerHTML = '<div class="msg-avatar">AI</div><div class="msg-bubble">Analisando os dados...</div>';
+  msg.innerHTML = '<div class="msg-avatar">AI</div><div class="msg-bubble">Analysing data...</div>';
   chatMessages.appendChild(msg);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
@@ -722,13 +722,13 @@ async function sendMessage() {
     removeTyping();
 
     if (data.error) {
-      appendMsg('bot', '⚠️ Erro: ' + data.error);
+      appendMsg('bot', '⚠️ Error: ' + data.error);
     } else {
       appendMsg('bot', data.answer);
     }
   } catch (err) {
     removeTyping();
-    appendMsg('bot', '⚠️ Não foi possível conectar ao assistente. Verifique sua conexão e tente novamente.');
+    appendMsg('bot', '⚠️ Could not connect to the assistant. Please check your connection and try again.');
   } finally {
     isLoading = false;
     chatSendBtn.disabled = false;
