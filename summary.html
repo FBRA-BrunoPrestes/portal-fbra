@@ -19,14 +19,10 @@
       --fersa-power: #96CF17;
       --fersa-energy: #2FD466;
       --fersa-white: #FFFFFF;
-
-      /* Brand colors used in charts */
       --brand-fersa: #00A9FF;
       --brand-as: #2FD466;
       --brand-nke: #96CF17;
       --brand-pfi: #50DCC8;
-
-      /* Dark UI surfaces */
       --surface-1: #062b48;
       --surface-2: #0a3760;
       --surface-3: #0e4373;
@@ -36,32 +32,33 @@
       --text-secondary: rgba(255,255,255,0.65);
       --text-muted: rgba(255,255,255,0.42);
     }
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { font-size: 16px; -webkit-font-smoothing: antialiased; }
-    body {
-      font-family: 'Inter', 'TT Hoves Pro', 'Segoe UI', sans-serif;
-      background: var(--fersa-origin);
-      color: var(--text-primary);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+    body { font-family: 'Inter','Segoe UI',sans-serif; background: var(--fersa-origin); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* LOADING OVERLAY */
+    #loading-overlay {
+      position: fixed; inset: 0; background: var(--fersa-origin);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 9999; gap: 16px;
     }
+    #loading-overlay.hidden { display: none; }
+    .loading-spinner {
+      width: 36px; height: 36px; border: 3px solid rgba(0,169,255,0.2);
+      border-top-color: var(--fersa-electric); border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 13px; color: var(--text-secondary); }
+    #error-banner {
+      display: none; background: rgba(211,47,47,0.15); border: 1px solid rgba(211,47,47,0.4);
+      border-radius: 8px; padding: 14px 20px; margin: 20px 40px;
+      font-size: 13px; color: #ff6b6b; line-height: 1.6;
+    }
+    #error-banner.visible { display: block; }
 
     /* TOPBAR */
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 40px;
-      height: 64px;
-      border-bottom: 1px solid var(--border-soft);
-      background: rgba(0,50,86,0.95);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      flex-shrink: 0;
-    }
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 40px; height: 64px; border-bottom: 1px solid var(--border-soft); background: rgba(0,50,86,0.95); position: sticky; top: 0; z-index: 100; flex-shrink: 0; }
     .topbar-left { display: flex; align-items: center; gap: 20px; }
     .topbar-logo svg { height: 20px; display: block; }
     .topbar-sep { width: 1px; height: 20px; background: rgba(255,255,255,0.15); }
@@ -69,271 +66,88 @@
     .topbar-right { display: flex; align-items: center; gap: 8px; }
     .topbar-flag { display: flex; align-items: center; gap: 6px; }
     .topbar-flag img { display: block; width: 32px; height: 22px; border-radius: 3px; opacity: 0.85; }
-
-    /* NAV */
     .topbar-nav { display: flex; gap: 4px; margin: 0 auto; }
-    .nav-btn {
-      display: flex; align-items: center;
-      padding: 6px 14px; border-radius: 6px;
-      font-size: 13px; font-weight: 500;
-      color: var(--text-secondary); text-decoration: none;
-      border: 1px solid transparent;
-      transition: background .15s, color .15s;
-      white-space: nowrap;
-    }
+    .nav-btn { display: flex; align-items: center; padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; color: var(--text-secondary); text-decoration: none; border: 1px solid transparent; transition: background .15s, color .15s; white-space: nowrap; }
     .nav-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
-    .nav-btn.active {
-      background: rgba(0,169,255,0.15);
-      color: var(--fersa-electric);
-      border-color: rgba(0,169,255,0.25);
-    }
+    .nav-btn.active { background: rgba(0,169,255,0.15); color: var(--fersa-electric); border-color: rgba(0,169,255,0.25); }
+
+    /* DATA TIMESTAMP */
+    .data-timestamp { font-size: 11px; color: var(--text-muted); padding: 6px 40px; background: rgba(0,0,0,0.15); border-bottom: 1px solid var(--border-soft); display: flex; align-items: center; gap: 6px; }
+    .data-timestamp .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--fersa-energy); flex-shrink: 0; }
 
     /* CONTENT */
-    .content {
-      flex: 1;
-      padding: 28px 40px 48px;
-      max-width: 1784px;
-      width: 100%;
-      margin: 0 auto;
-    }
-    .page-title {
-      font-size: 12px; font-weight: 500;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-    }
-    .page-heading {
-      font-size: 26px; font-weight: 600;
-      color: var(--text-primary);
-      letter-spacing: -0.01em;
-      margin-bottom: 4px;
-    }
-    .page-subtitle {
-      font-size: 13px; color: var(--text-secondary);
-      margin-bottom: 22px;
-    }
+    .content { flex: 1; padding: 28px 40px 48px; max-width: 1784px; width: 100%; margin: 0 auto; }
+    .page-title { font-size: 12px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+    .page-heading { font-size: 26px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.01em; margin-bottom: 4px; }
+    .page-subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: 22px; }
 
-    /* FILTERS BAR */
-    .filters {
-      background: var(--surface-1);
-      border: 1px solid var(--border-soft);
-      border-radius: 10px;
-      padding: 16px 20px;
-      margin-bottom: 22px;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-    }
+    /* FILTERS */
+    .filters { background: var(--surface-1); border: 1px solid var(--border-soft); border-radius: 10px; padding: 16px 20px; margin-bottom: 22px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
     .filter-group { display: flex; flex-direction: column; gap: 8px; }
-    .filter-label {
-      font-size: 11px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.07em;
-      color: var(--text-muted);
-    }
+    .filter-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); }
     .filter-pills { display: flex; flex-wrap: wrap; gap: 6px; }
-    .pill {
-      padding: 5px 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border-med);
-      color: var(--text-secondary);
-      font-size: 12px; font-weight: 500;
-      cursor: pointer;
-      transition: all .15s;
-      user-select: none;
-    }
+    .pill { padding: 5px 12px; border-radius: 999px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-med); color: var(--text-secondary); font-size: 12px; font-weight: 500; cursor: pointer; transition: all .15s; user-select: none; }
     .pill:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
-    .pill.active {
-      background: var(--fersa-electric);
-      color: var(--fersa-origin);
-      border-color: var(--fersa-electric);
-      font-weight: 600;
-    }
-    .pill.disabled {
-      opacity: 0.35; cursor: not-allowed; pointer-events: none;
-    }
+    .pill.active { background: var(--fersa-electric); color: var(--fersa-origin); border-color: var(--fersa-electric); font-weight: 600; }
     .pill-brand-fersa.active { background: var(--brand-fersa); border-color: var(--brand-fersa); color: var(--fersa-origin); }
     .pill-brand-as.active    { background: var(--brand-as);    border-color: var(--brand-as);    color: var(--fersa-origin); }
     .pill-brand-nke.active   { background: var(--brand-nke);   border-color: var(--brand-nke);   color: var(--fersa-origin); }
     .pill-brand-pfi.active   { background: var(--brand-pfi);   border-color: var(--brand-pfi);   color: var(--fersa-origin); }
-
     .filter-actions { display: flex; gap: 8px; margin-top: 4px; }
-    .mini-btn {
-      font-size: 10.5px; font-weight: 500;
-      color: var(--text-muted);
-      background: transparent; border: none; cursor: pointer;
-      padding: 2px 0; letter-spacing: 0.04em;
-    }
+    .mini-btn { font-size: 10.5px; font-weight: 500; color: var(--text-muted); background: transparent; border: none; cursor: pointer; padding: 2px 0; letter-spacing: 0.04em; }
     .mini-btn:hover { color: var(--fersa-electric); }
 
-    /* KPI CARDS */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 22px;
-    }
-    .kpi-card {
-      background: var(--surface-1);
-      border: 1px solid var(--border-soft);
-      border-radius: 10px;
-      padding: 18px 20px;
-      position: relative;
-      overflow: hidden;
-    }
-    .kpi-card::before {
-      content: '';
-      position: absolute; left: 0; top: 0; bottom: 0;
-      width: 3px;
-      background: var(--accent, var(--fersa-electric));
-    }
-    .kpi-card.kpi-backorder  { --accent: var(--fersa-chrome); }
-    .kpi-card.kpi-budget     { --accent: var(--fersa-electric); }
-    .kpi-card.kpi-invoiced   { --accent: var(--fersa-energy); }
-    .kpi-card.kpi-possible   { --accent: var(--fersa-soul); }
+    /* KPI */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 22px; }
+    .kpi-card { background: var(--surface-1); border: 1px solid var(--border-soft); border-radius: 10px; padding: 18px 20px; position: relative; overflow: hidden; }
+    .kpi-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent, var(--fersa-electric)); }
+    .kpi-card.kpi-backorder { --accent: var(--fersa-chrome); }
+    .kpi-card.kpi-budget    { --accent: var(--fersa-electric); }
+    .kpi-card.kpi-invoiced  { --accent: var(--fersa-energy); }
+    .kpi-card.kpi-possible  { --accent: var(--fersa-soul); }
+    .kpi-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 8px; }
+    .kpi-value { font-size: 26px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; line-height: 1.1; }
+    .kpi-sub { font-size: 11px; color: var(--text-secondary); margin-top: 6px; }
 
-    .kpi-label {
-      font-size: 11px; font-weight: 500;
-      text-transform: uppercase; letter-spacing: 0.08em;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-    }
-    .kpi-value {
-      font-size: 26px; font-weight: 700;
-      color: var(--text-primary);
-      letter-spacing: -0.01em;
-      line-height: 1.1;
-    }
-    .kpi-sub {
-      font-size: 11px; color: var(--text-secondary);
-      margin-top: 6px;
-    }
-
-    /* ANALYSIS ROW */
-    .analysis-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      margin-bottom: 22px;
-    }
-    .card {
-      background: var(--surface-1);
-      border: 1px solid var(--border-soft);
-      border-radius: 10px;
-      padding: 22px;
-    }
-    .card-head {
-      display: flex; align-items: flex-start; justify-content: space-between;
-      margin-bottom: 16px; gap: 12px;
-    }
-    .card-title {
-      font-size: 14px; font-weight: 600;
-      color: var(--text-primary);
-      letter-spacing: -0.005em;
-    }
-    .card-subtitle {
-      font-size: 11.5px; color: var(--text-secondary);
-      margin-top: 3px; line-height: 1.4;
-    }
-    .big-pct {
-      font-size: 48px; font-weight: 700;
-      color: var(--fersa-electric);
-      letter-spacing: -0.02em;
-      line-height: 1;
-    }
+    /* ANALYSIS */
+    .analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 22px; }
+    .card { background: var(--surface-1); border: 1px solid var(--border-soft); border-radius: 10px; padding: 22px; }
+    .card-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; gap: 12px; }
+    .card-title { font-size: 14px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.005em; }
+    .card-subtitle { font-size: 11.5px; color: var(--text-secondary); margin-top: 3px; line-height: 1.4; }
+    .big-pct { font-size: 48px; font-weight: 700; color: var(--fersa-electric); letter-spacing: -0.02em; line-height: 1; }
     .big-pct.success { color: var(--fersa-energy); }
     .big-pct.warning { color: #F59E0B; }
     .big-pct.danger  { color: #D32F2F; }
-    .pct-context {
-      font-size: 12px; color: var(--text-secondary);
-      margin-top: 6px; line-height: 1.5;
-    }
+    .pct-context { font-size: 12px; color: var(--text-secondary); margin-top: 6px; line-height: 1.5; }
     .pct-context strong { color: var(--text-primary); font-weight: 600; }
-
-    .chart-wrap {
-      position: relative;
-      height: 240px;
-      margin-top: 18px;
-    }
+    .chart-wrap { position: relative; height: 240px; margin-top: 18px; }
     .chart-wrap.tall { height: 320px; }
 
-    /* DETAIL TABLE */
+    /* TABLE */
     .table-card { background: var(--surface-1); border: 1px solid var(--border-soft); border-radius: 10px; padding: 22px; }
     .table-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-    table.detail {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-    table.detail th {
-      text-align: right;
-      font-weight: 500;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-muted);
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--border-med);
-    }
+    table.detail { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table.detail th { text-align: right; font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); padding: 10px 12px; border-bottom: 1px solid var(--border-med); }
     table.detail th:first-child { text-align: left; }
-    table.detail td {
-      padding: 12px;
-      text-align: right;
-      color: var(--text-primary);
-      border-bottom: 1px solid var(--border-soft);
-    }
-    table.detail td:first-child {
-      text-align: left;
-      font-weight: 600;
-      display: flex; align-items: center; gap: 10px;
-    }
+    table.detail td { padding: 12px; text-align: right; color: var(--text-primary); border-bottom: 1px solid var(--border-soft); }
+    table.detail td:first-child { text-align: left; font-weight: 600; display: flex; align-items: center; gap: 10px; }
     table.detail tr:last-child td { border-bottom: none; }
-    table.detail tr.total-row td {
-      border-top: 2px solid var(--border-med);
-      border-bottom: none;
-      padding-top: 14px;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-    .brand-dot {
-      width: 8px; height: 8px; border-radius: 2px;
-      flex-shrink: 0;
-    }
-    .pct-badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-weight: 600;
-      font-size: 12px;
-    }
-    .pct-badge.high { background: rgba(47,212,102,0.18); color: var(--fersa-energy); }
-    .pct-badge.mid  { background: rgba(0,169,255,0.18); color: var(--fersa-electric); }
-    .pct-badge.low  { background: rgba(245,158,11,0.18); color: #F59E0B; }
-    .pct-badge.critical { background: rgba(211,47,47,0.22); color: #ff6b6b; }
+    table.detail tr.total-row td { border-top: 2px solid var(--border-med); border-bottom: none; padding-top: 14px; font-weight: 700; }
+    .brand-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+    .pct-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; }
+    .pct-badge.high     { background: rgba(47,212,102,0.18); color: var(--fersa-energy); }
+    .pct-badge.mid      { background: rgba(0,169,255,0.18);  color: var(--fersa-electric); }
+    .pct-badge.low      { background: rgba(245,158,11,0.18); color: #F59E0B; }
+    .pct-badge.critical { background: rgba(211,47,47,0.22);  color: #ff6b6b; }
+    .note { font-size: 11.5px; color: var(--text-muted); margin-top: 14px; line-height: 1.5; }
 
-    .note {
-      font-size: 11.5px; color: var(--text-muted);
-      margin-top: 14px; line-height: 1.5;
-    }
-
-    /* Responsive */
-    @media (max-width: 1200px) {
-      .filters { grid-template-columns: repeat(2, 1fr); }
-      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-      .analysis-grid { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 720px) {
-      .content { padding: 20px 16px 40px; }
-      .topbar { padding: 0 16px; }
-      .topbar-nav { display: none; }
-      .filters { grid-template-columns: 1fr; }
-      .kpi-grid { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 1200px) { .filters { grid-template-columns: repeat(2,1fr); } .kpi-grid { grid-template-columns: repeat(2,1fr); } .analysis-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 720px) { .content { padding: 20px 16px 40px; } .topbar { padding: 0 16px; } .topbar-nav { display: none; } .filters { grid-template-columns: 1fr; } .kpi-grid { grid-template-columns: 1fr; } .data-timestamp { padding: 6px 16px; } }
   </style>
 </head>
 <body>
 <script>
-/* ── FERSA PORTAL AUTH GUARD ── */
 (function(){
   var SESSION_KEY  = 'fersa_portal_auth';
   var REDIRECT_KEY = 'fersa_portal_redirect';
@@ -343,6 +157,15 @@
   }
 })();
 </script>
+
+<!-- Loading overlay -->
+<div id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Loading data…</div>
+</div>
+
+<!-- Error banner (shown if CSV fails to load) -->
+<div id="error-banner"></div>
 
 <header class="topbar">
   <div class="topbar-left">
@@ -360,27 +183,30 @@
     <div class="topbar-sep"></div>
     <span class="topbar-product">Excellence beyond bearings</span>
   </div>
-
   <nav class="topbar-nav">
     <a href="index.html" class="nav-btn">Home</a>
     <a href="purchases.html" class="nav-btn">Purchases</a>
     <a href="summary.html" class="nav-btn active">Summary</a>
     <a href="stock.html" class="nav-btn">Stock &amp; Sales</a>
   </nav>
-
   <div class="topbar-right">
     <div class="topbar-flag" title="Fersa Brasil">
-      <img src="data:image/png;base64,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" alt="Brasil" />
+      <img src="data:image/png;base64,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" alt="Brasil" />
     </div>
   </div>
 </header>
+
+<!-- Data timestamp bar -->
+<div class="data-timestamp" id="data-timestamp" style="display:none">
+  <span class="dot"></span>
+  <span id="timestamp-text">Data loaded</span>
+</div>
 
 <main class="content">
   <p class="page-title">Summary</p>
   <h1 class="page-heading">Revenue &amp; Budget</h1>
   <p class="page-subtitle">Backorder coverage and budget attainment across brands and periods. All values in EUR.</p>
 
-  <!-- FILTERS -->
   <section class="filters" aria-label="Filters">
     <div class="filter-group">
       <span class="filter-label">Year</span>
@@ -415,7 +241,6 @@
     </div>
   </section>
 
-  <!-- KPIs -->
   <section class="kpi-grid">
     <div class="kpi-card kpi-backorder">
       <div class="kpi-label">Sales Backorder</div>
@@ -439,7 +264,6 @@
     </div>
   </section>
 
-  <!-- ANALYSIS CARDS -->
   <section class="analysis-grid">
     <div class="card">
       <div class="card-head">
@@ -452,7 +276,6 @@
       <div class="pct-context" id="pct-coverage-ctx">—</div>
       <div class="chart-wrap"><canvas id="chart-coverage"></canvas></div>
     </div>
-
     <div class="card">
       <div class="card-head">
         <div>
@@ -466,7 +289,6 @@
     </div>
   </section>
 
-  <!-- POSSIBLE SALES OVER TIME -->
   <section class="card" style="margin-bottom: 22px;">
     <div class="card-head">
       <div>
@@ -478,7 +300,6 @@
     <p class="note">Note: monthly granularity is available for May–Nov 2026. Periods <em>Dec 2026 – May 2027</em> and <em>After May 2027</em> are reported as aggregated buckets in the source data.</p>
   </section>
 
-  <!-- DETAIL TABLE -->
   <section class="table-card">
     <div class="table-head">
       <div>
@@ -504,7 +325,6 @@
 </main>
 
 <script>
-/* ── FERSA PORTAL LOGOUT ── */
 function fersaLogout() {
   sessionStorage.removeItem('fersa_portal_auth');
   window.location.replace('login.html');
@@ -513,110 +333,133 @@ function fersaLogout() {
 
 <script>
 /* ================================================================
-   DATA (from summary.xlsx)
+   ▼ ÚNICA LINHA QUE VOCÊ PRECISA ALTERAR
+   Coloque aqui a URL raw do seu CSV no GitHub.
+   Exemplo: https://raw.githubusercontent.com/SEU_USUARIO/SEU_REPOSITORIO/main/data/summary.csv
    ================================================================ */
-const BRANDS = ['Fersa', 'A&S', 'NKE', 'PFI'];
+const CSV_URL = 'https://raw.githubusercontent.com/FBRA-BrunoPrestes/portal-fbra/refs/heads/main/netlify/data/summary.csv?token=GHSAT0AAAAAAD5WJKHDNPVOKMDMMEFCR26S2QPDQQA';
 
-const BRAND_COLORS = {
-  'Fersa': '#00A9FF',
-  'A&S':   '#2FD466',
-  'NKE':   '#96CF17',
-  'PFI':   '#50DCC8'
-};
+/* ================================================================
+   CSV PARSER
+   Suporta separador ; e vírgula como decimal (padrão pt-BR)
+   ================================================================ */
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  const headers = lines[0].split(';').map(h => h.trim());
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const cols = lines[i].split(';').map(c => c.trim());
+    const obj = {};
+    headers.forEach((h, j) => { obj[h] = cols[j] || ''; });
+    rows.push(obj);
+  }
+  return rows;
+}
 
-// Sales Backorder per brand (total open orders, EUR)
-const SALES_BACKORDER = {
-  'Fersa': 709014.553125,
-  'A&S':   424871.228125,
-  'NKE':   266952.164063,
-  'PFI':   393108.129687
-};
+/* Parse número: aceita vírgula como decimal e espaço/ponto como milhar */
+function parseNum(str) {
+  if (!str || str.trim() === '' || str.trim() === '0') return 0;
+  // Remove espaços; substitui vírgula por ponto
+  const clean = str.replace(/\s/g, '').replace(',', '.');
+  const n = parseFloat(clean);
+  return isNaN(n) ? 0 : n;
+}
 
-// Sales Budget for May 2026 (the only month HQ has set the target for)
-const SALES_BUDGET = {
-  'Fersa': 725802,
-  'A&S':   183457,
-  'NKE':    75651,
-  'PFI':   244510
-};
-
-// Invoiced in the current month (May 2026)
-const INVOICED_CURRENT = {
-  'Fersa': 201408.742188,
-  'A&S':   111713.414063,
-  'NKE':    53167.757812,
-  'PFI':    42432.237500
-};
-
-/* Possible Sales: how much of backorder we can invoice in each future period.
-   Months May–Nov 2026 are monthly; then two aggregated buckets. */
-const POSSIBLE_SALES = {
-  'Fersa': { May: 56934.596287, Jun: 146194.525237, Jul: 142720.943114, Aug: 140456.094105, Sep:  62319.41512,  Oct: 25142.02938,  Nov:  4232.151726, Bucket1:   7386.697778, Bucket2: 43728.135647 },
-  'A&S':   { May: 66860.535145, Jun:  51336.664458, Jul: 151765.318281, Aug:  81909.302359, Sep:  19166.049297, Oct: 14622.914059, Nov:        0.0,    Bucket1:    759.149215, Bucket2: 34823.077031 },
-  'NKE':   { May: 66056.475332, Jun:  11510.101565, Jul:  54635.662472, Aug:  49175.805662, Sep:  16956.901303, Oct: 11159.966823, Nov:  1618.010937, Bucket1:   1901.95625,  Bucket2:     0.0      },
-  'PFI':   { May:  8222.667376, Jun: 133522.367774, Jul:  84306.293951, Aug:  25652.834615, Sep:  11847.281655, Oct:  7995.873765, Nov:  2968.720313, Bucket1: 103274.830384, Bucket2:  8729.547314 }
-};
-
-// Bucket1 = Dec 2026 through May 2027 (6 months)
-// Bucket2 = After May 2027
-
+/* ================================================================
+   CONSTANTES DE ESTRUTURA (não mudam com os dados)
+   ================================================================ */
+const BRAND_COLORS = { 'Fersa':'#00A9FF', 'A&S':'#2FD466', 'NKE':'#96CF17', 'PFI':'#50DCC8' };
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const YEARS  = [2026, 2027];
 
-/* Which monthly columns from the data we have available per year. */
+const PERIOD_DEFS = [
+  { key:'May',     label:'May 2026', year:2026, month:'May' },
+  { key:'Jun',     label:'Jun 2026', year:2026, month:'Jun' },
+  { key:'Jul',     label:'Jul 2026', year:2026, month:'Jul' },
+  { key:'Aug',     label:'Aug 2026', year:2026, month:'Aug' },
+  { key:'Sep',     label:'Sep 2026', year:2026, month:'Sep' },
+  { key:'Oct',     label:'Oct 2026', year:2026, month:'Oct' },
+  { key:'Nov',     label:'Nov 2026', year:2026, month:'Nov' },
+  { key:'Bucket1', label:'Dec 26 — May 27', isBucket:true },
+  { key:'Bucket2', label:'After May 27',    isBucket:true }
+];
+
 const MONTHLY_DATA_KEYS = {
   2026: { May:'May', Jun:'Jun', Jul:'Jul', Aug:'Aug', Sep:'Sep', Oct:'Oct', Nov:'Nov' },
-  2027: {} // 2027 monthly is contained in the bucketed columns
+  2027: {}
 };
 
-/* Map (year, month) → which bucket(s) should be activated.
-   Bucket is included once when ANY (year,month) inside its range is selected. */
-function bucketsForFilter(years, months) {
-  const set = new Set();
-  // Bucket1: Dec 2026 + Jan..May 2027
-  if (years.includes(2026) && months.includes('Dec')) set.add('Bucket1');
-  if (years.includes(2027) && months.some(m => ['Jan','Feb','Mar','Apr','May'].includes(m))) set.add('Bucket1');
-  // Bucket2: Jun 2027 onwards (treat any 2027 month after May as inclusion)
-  if (years.includes(2027) && months.some(m => ['Jun','Jul','Aug','Sep','Oct','Nov','Dec'].includes(m))) set.add('Bucket2');
-  return set;
-}
+/* ================================================================
+   DADOS GLOBAIS (populados após o fetch do CSV)
+   ================================================================ */
+let BRANDS = [];
+let SALES_BACKORDER   = {};
+let SALES_BUDGET      = {};
+let INVOICED_CURRENT  = {};
+let POSSIBLE_SALES    = {};
 
-/* The discrete "periods" present in the underlying data (for timeline chart). */
-const PERIOD_DEFS = [
-  { key: 'May',     label: 'May 2026', year: 2026, month: 'May' },
-  { key: 'Jun',     label: 'Jun 2026', year: 2026, month: 'Jun' },
-  { key: 'Jul',     label: 'Jul 2026', year: 2026, month: 'Jul' },
-  { key: 'Aug',     label: 'Aug 2026', year: 2026, month: 'Aug' },
-  { key: 'Sep',     label: 'Sep 2026', year: 2026, month: 'Sep' },
-  { key: 'Oct',     label: 'Oct 2026', year: 2026, month: 'Oct' },
-  { key: 'Nov',     label: 'Nov 2026', year: 2026, month: 'Nov' },
-  { key: 'Bucket1', label: 'Dec 26 — May 27', isBucket: true },
-  { key: 'Bucket2', label: 'After May 27',    isBucket: true }
-];
+/* Mapeia cabeçalhos do CSV → chaves internas */
+const COL_MAP = {
+  'Brand':                                          'brand',
+  'Invoiced May':                                   'invoiced',
+  'May 2026 Sales Budget':                          'budget',
+  'Sales Backorder':                                'backorder',
+  'May Possible Sales':                             'May',
+  'Jun Possible Sales':                             'Jun',
+  'Jul Possible Sales':                             'Jul',
+  'Aug Possible Sales':                             'Aug',
+  'Sep Possible Sales':                             'Sep',
+  'Oct Possible Sales':                             'Oct',
+  'Nov Possible Sales':                             'Nov',
+  'Between December 26 and May 27 Possible Sales':  'Bucket1',
+  'After May 27 Possible Sales':                    'Bucket2'
+};
+
+function loadCSVData(rows) {
+  BRANDS = [];
+  SALES_BACKORDER  = {};
+  SALES_BUDGET     = {};
+  INVOICED_CURRENT = {};
+  POSSIBLE_SALES   = {};
+
+  rows.forEach(row => {
+    const brand = row['Brand'];
+    if (!brand) return;
+    BRANDS.push(brand);
+    SALES_BACKORDER[brand]  = parseNum(row['Sales Backorder']);
+    SALES_BUDGET[brand]     = parseNum(row['May 2026 Sales Budget']);
+    INVOICED_CURRENT[brand] = parseNum(row['Invoiced May']);
+    POSSIBLE_SALES[brand]   = {
+      May:     parseNum(row['May Possible Sales']),
+      Jun:     parseNum(row['Jun Possible Sales']),
+      Jul:     parseNum(row['Jul Possible Sales']),
+      Aug:     parseNum(row['Aug Possible Sales']),
+      Sep:     parseNum(row['Sep Possible Sales']),
+      Oct:     parseNum(row['Oct Possible Sales']),
+      Nov:     parseNum(row['Nov Possible Sales']),
+      Bucket1: parseNum(row['Between December 26 and May 27 Possible Sales']),
+      Bucket2: parseNum(row['After May 27 Possible Sales'])
+    };
+  });
+}
 
 /* ================================================================
    STATE
    ================================================================ */
 const state = {
-  years:  [2026],
-  months: ['May'],
-  brands: [...BRANDS],
-  compare: 'both'  // 'invoiced' | 'possible' | 'both'
+  years:   [2026],
+  months:  ['May'],
+  brands:  [],
+  compare: 'both'
 };
 
 /* ================================================================
    FORMATTERS
    ================================================================ */
-const fmtEUR = new Intl.NumberFormat('en-IE', {
-  style: 'currency', currency: 'EUR',
-  minimumFractionDigits: 0, maximumFractionDigits: 0
-});
-const fmtEURsmall = new Intl.NumberFormat('en-IE', {
-  style: 'currency', currency: 'EUR',
-  minimumFractionDigits: 0, maximumFractionDigits: 0,
-  notation: 'compact'
-});
-const fmtPct = (x) => isFinite(x) ? (x*100).toFixed(1) + '%' : '—';
+const fmtEUR = new Intl.NumberFormat('en-IE', { style:'currency', currency:'EUR', minimumFractionDigits:0, maximumFractionDigits:0 });
+const fmtEURsmall = new Intl.NumberFormat('en-IE', { style:'currency', currency:'EUR', minimumFractionDigits:0, maximumFractionDigits:0, notation:'compact' });
+const fmtPct = (x) => isFinite(x) ? (x*100).toFixed(1)+'%' : '—';
 
 /* ================================================================
    FILTER UI
@@ -627,7 +470,7 @@ function renderPills(containerId, items, current, onToggle, classFn) {
   items.forEach(it => {
     const pill = document.createElement('button');
     pill.type = 'button';
-    pill.className = 'pill' + (classFn ? ' ' + classFn(it) : '');
+    pill.className = 'pill' + (classFn ? ' '+classFn(it) : '');
     pill.textContent = it.label;
     if (current.includes(it.value)) pill.classList.add('active');
     pill.addEventListener('click', () => onToggle(it.value));
@@ -638,59 +481,33 @@ function renderPills(containerId, items, current, onToggle, classFn) {
 function renderCompare() {
   const el = document.getElementById('filter-compare');
   el.innerHTML = '';
-  const opts = [
-    { value: 'invoiced', label: 'Invoiced' },
-    { value: 'possible', label: 'Possible Sales' },
-    { value: 'both',     label: 'Both' }
-  ];
-  opts.forEach(o => {
+  [{ value:'invoiced', label:'Invoiced' }, { value:'possible', label:'Possible Sales' }, { value:'both', label:'Both' }].forEach(o => {
     const pill = document.createElement('button');
     pill.type = 'button';
     pill.className = 'pill';
     pill.textContent = o.label;
     if (state.compare === o.value) pill.classList.add('active');
-    pill.addEventListener('click', () => {
-      state.compare = o.value;
-      renderAll();
-    });
+    pill.addEventListener('click', () => { state.compare = o.value; renderAll(); });
     el.appendChild(pill);
   });
 }
 
 function renderFilters() {
-  renderPills(
-    'filter-year',
-    YEARS.map(y => ({ value: y, label: String(y) })),
+  renderPills('filter-year',
+    YEARS.map(y => ({ value:y, label:String(y) })),
     state.years,
-    (v) => {
-      if (state.years.includes(v)) state.years = state.years.filter(x => x !== v);
-      else state.years = [...state.years, v];
-      renderAll();
-    }
+    (v) => { state.years = state.years.includes(v) ? state.years.filter(x=>x!==v) : [...state.years,v]; renderAll(); }
   );
-  renderPills(
-    'filter-month',
-    MONTHS.map(m => ({ value: m, label: m })),
+  renderPills('filter-month',
+    MONTHS.map(m => ({ value:m, label:m })),
     state.months,
-    (v) => {
-      if (state.months.includes(v)) state.months = state.months.filter(x => x !== v);
-      else state.months = [...state.months, v];
-      renderAll();
-    }
+    (v) => { state.months = state.months.includes(v) ? state.months.filter(x=>x!==v) : [...state.months,v]; renderAll(); }
   );
-  renderPills(
-    'filter-brand',
-    BRANDS.map(b => ({ value: b, label: b })),
+  renderPills('filter-brand',
+    BRANDS.map(b => ({ value:b, label:b })),
     state.brands,
-    (v) => {
-      if (state.brands.includes(v)) state.brands = state.brands.filter(x => x !== v);
-      else state.brands = [...state.brands, v];
-      renderAll();
-    },
-    (it) => {
-      const map = { 'Fersa':'pill-brand-fersa','A&S':'pill-brand-as','NKE':'pill-brand-nke','PFI':'pill-brand-pfi' };
-      return map[it.value] || '';
-    }
+    (v) => { state.brands = state.brands.includes(v) ? state.brands.filter(x=>x!==v) : [...state.brands,v]; renderAll(); },
+    (it) => ({ 'Fersa':'pill-brand-fersa','A&S':'pill-brand-as','NKE':'pill-brand-nke','PFI':'pill-brand-pfi' }[it.value] || '')
   );
   renderCompare();
 }
@@ -698,83 +515,65 @@ function renderFilters() {
 document.addEventListener('click', (e) => {
   const btn = e.target.closest('[data-action]');
   if (!btn) return;
-  const action = btn.dataset.action;
-  const target = btn.dataset.target;
-  if (target === 'year') {
-    state.years = action === 'all' ? [...YEARS] : [];
-  } else if (target === 'month') {
-    state.months = action === 'all' ? [...MONTHS] : [];
-  } else if (target === 'brand') {
-    state.brands = action === 'all' ? [...BRANDS] : [];
-  }
+  const { action, target } = btn.dataset;
+  if (target === 'year')  state.years  = action === 'all' ? [...YEARS]  : [];
+  if (target === 'month') state.months = action === 'all' ? [...MONTHS] : [];
+  if (target === 'brand') state.brands = action === 'all' ? [...BRANDS] : [];
   renderAll();
 });
 
 /* ================================================================
    COMPUTATION
    ================================================================ */
+function bucketsForFilter(years, months) {
+  const set = new Set();
+  if (years.includes(2026) && months.includes('Dec')) set.add('Bucket1');
+  if (years.includes(2027) && months.some(m => ['Jan','Feb','Mar','Apr','May'].includes(m))) set.add('Bucket1');
+  if (years.includes(2027) && months.some(m => ['Jun','Jul','Aug','Sep','Oct','Nov','Dec'].includes(m))) set.add('Bucket2');
+  return set;
+}
+
 function activeKeys() {
-  // Returns the set of POSSIBLE_SALES sub-keys that are active given filters.
   const keys = new Set();
   if (state.years.includes(2026)) {
-    state.months.forEach(m => {
-      if (MONTHLY_DATA_KEYS[2026][m]) keys.add(MONTHLY_DATA_KEYS[2026][m]);
-    });
+    state.months.forEach(m => { if (MONTHLY_DATA_KEYS[2026][m]) keys.add(MONTHLY_DATA_KEYS[2026][m]); });
   }
-  const buckets = bucketsForFilter(state.years, state.months);
-  buckets.forEach(b => keys.add(b));
+  bucketsForFilter(state.years, state.months).forEach(b => keys.add(b));
   return keys;
 }
 
 function compute() {
   const keys = activeKeys();
   const brands = state.brands;
-
-  let totalBackorder = 0;
-  let totalBudget = 0;
-  let totalInvoiced = 0;
-  let totalPossible = 0;
-
+  let totalBackorder=0, totalBudget=0, totalInvoiced=0, totalPossible=0;
   const perBrand = {};
+
   brands.forEach(b => {
-    const bo = SALES_BACKORDER[b] || 0;
-    const bg = SALES_BUDGET[b]    || 0;
+    const bo  = SALES_BACKORDER[b]  || 0;
+    const bg  = SALES_BUDGET[b]     || 0;
     const inv = INVOICED_CURRENT[b] || 0;
     let pos = 0;
     keys.forEach(k => { pos += (POSSIBLE_SALES[b] && POSSIBLE_SALES[b][k]) || 0; });
-
-    totalBackorder += bo;
-    totalBudget    += bg;
-    totalInvoiced  += inv;
-    totalPossible  += pos;
-
+    totalBackorder += bo; totalBudget += bg; totalInvoiced += inv; totalPossible += pos;
     perBrand[b] = {
-      backorder: bo,
-      budget: bg,
-      invoiced: inv,
-      possible: pos,
-      coverage: bo > 0 ? pos / bo : NaN,
-      attainmentBoth:     bg > 0 ? (inv + pos) / bg : NaN,
-      attainmentInvoiced: bg > 0 ? inv / bg          : NaN,
-      attainmentPossible: bg > 0 ? pos / bg          : NaN
+      backorder:bo, budget:bg, invoiced:inv, possible:pos,
+      coverage:           bo>0 ? pos/bo        : NaN,
+      attainmentBoth:     bg>0 ? (inv+pos)/bg  : NaN,
+      attainmentInvoiced: bg>0 ? inv/bg         : NaN,
+      attainmentPossible: bg>0 ? pos/bg         : NaN
     };
   });
 
-  const compareNumerator = (b) => {
+  const totalNumerator = brands.reduce((s,b) => {
     const p = perBrand[b];
-    if (state.compare === 'invoiced') return p.invoiced;
-    if (state.compare === 'possible') return p.possible;
-    return p.invoiced + p.possible;
-  };
+    return s + (state.compare==='invoiced' ? p.invoiced : state.compare==='possible' ? p.possible : p.invoiced+p.possible);
+  }, 0);
 
-  const totalNumerator = brands.reduce((s,b) => s + compareNumerator(b), 0);
-  const totalAttainment = totalBudget > 0 ? totalNumerator / totalBudget : NaN;
-  const totalCoverage   = totalBackorder > 0 ? totalPossible / totalBackorder : NaN;
-
-  return { perBrand, totals: {
-    backorder: totalBackorder, budget: totalBudget,
-    invoiced: totalInvoiced,   possible: totalPossible,
-    coverage: totalCoverage,   attainment: totalAttainment,
+  return { perBrand, totals:{
+    backorder:totalBackorder, budget:totalBudget,
+    invoiced:totalInvoiced, possible:totalPossible,
+    coverage: totalBackorder>0 ? totalPossible/totalBackorder : NaN,
+    attainment: totalBudget>0 ? totalNumerator/totalBudget : NaN,
     numerator: totalNumerator
   }};
 }
@@ -782,7 +581,7 @@ function compute() {
 /* ================================================================
    CHARTS
    ================================================================ */
-Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.font.family = "'Inter',sans-serif";
 Chart.defaults.font.size = 11.5;
 Chart.defaults.color = 'rgba(255,255,255,0.65)';
 Chart.defaults.borderColor = 'rgba(255,255,255,0.08)';
@@ -791,206 +590,80 @@ let coverageChart, budgetChart, timelineChart;
 
 function makeCoverageChart(data) {
   const labels = state.brands;
-  const backorders = labels.map(b => data.perBrand[b].backorder);
-  const possibles  = labels.map(b => data.perBrand[b].possible);
-
   const ctx = document.getElementById('chart-coverage');
   if (coverageChart) coverageChart.destroy();
-  coverageChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        { label: 'Backorder',      data: backorders, backgroundColor: 'rgba(133,149,156,0.55)', borderRadius: 4 },
-        { label: 'Possible Sales', data: possibles,  backgroundColor: '#00A9FF', borderRadius: 4 }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'top', align: 'end', labels: { boxWidth: 10, boxHeight: 10, padding: 14 } },
-        tooltip: {
-          backgroundColor: '#062b48', borderColor: 'rgba(255,255,255,0.14)', borderWidth: 1,
-          padding: 10, titleFont: { weight: '600' },
-          callbacks: {
-            label: (ctx) => ctx.dataset.label + ': ' + fmtEUR.format(ctx.parsed.y)
-          }
-        }
-      },
-      scales: {
-        x: { grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.75)' } },
-        y: {
-          grid: { color: 'rgba(255,255,255,0.06)' },
-          ticks: { callback: (v) => fmtEURsmall.format(v) }
-        }
-      }
-    }
-  });
+  coverageChart = new Chart(ctx, { type:'bar', data:{ labels, datasets:[
+    { label:'Backorder',      data:labels.map(b=>data.perBrand[b].backorder), backgroundColor:'rgba(133,149,156,0.55)', borderRadius:4 },
+    { label:'Possible Sales', data:labels.map(b=>data.perBrand[b].possible),  backgroundColor:'#00A9FF', borderRadius:4 }
+  ]}, options:{ responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ position:'top', align:'end', labels:{ boxWidth:10, boxHeight:10, padding:14 } },
+      tooltip:{ backgroundColor:'#062b48', borderColor:'rgba(255,255,255,0.14)', borderWidth:1, padding:10, titleFont:{ weight:'600' },
+        callbacks:{ label:(c)=>c.dataset.label+': '+fmtEUR.format(c.parsed.y) } } },
+    scales:{ x:{ grid:{ display:false }, ticks:{ color:'rgba(255,255,255,0.75)' } },
+      y:{ grid:{ color:'rgba(255,255,255,0.06)' }, ticks:{ callback:(v)=>fmtEURsmall.format(v) } } } } });
 }
 
 function makeBudgetChart(data) {
   const labels = state.brands;
-  const budgets = labels.map(b => data.perBrand[b].budget);
-
-  const datasets = [
-    { label: 'Budget', data: budgets, backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: 4, stack: 'budget' }
-  ];
-
-  if (state.compare === 'invoiced' || state.compare === 'both') {
-    datasets.push({
-      label: 'Invoiced',
-      data: labels.map(b => data.perBrand[b].invoiced),
-      backgroundColor: '#2FD466',
-      borderRadius: 4,
-      stack: 'achieved'
-    });
-  }
-  if (state.compare === 'possible' || state.compare === 'both') {
-    datasets.push({
-      label: 'Possible Sales',
-      data: labels.map(b => data.perBrand[b].possible),
-      backgroundColor: '#00A9FF',
-      borderRadius: 4,
-      stack: 'achieved'
-    });
-  }
-
+  const datasets = [{ label:'Budget', data:labels.map(b=>data.perBrand[b].budget), backgroundColor:'rgba(255,255,255,0.18)', borderRadius:4, stack:'budget' }];
+  if (state.compare==='invoiced'||state.compare==='both') datasets.push({ label:'Invoiced', data:labels.map(b=>data.perBrand[b].invoiced), backgroundColor:'#2FD466', borderRadius:4, stack:'achieved' });
+  if (state.compare==='possible'||state.compare==='both') datasets.push({ label:'Possible Sales', data:labels.map(b=>data.perBrand[b].possible), backgroundColor:'#00A9FF', borderRadius:4, stack:'achieved' });
   const ctx = document.getElementById('chart-budget');
   if (budgetChart) budgetChart.destroy();
-  budgetChart = new Chart(ctx, {
-    type: 'bar',
-    data: { labels, datasets },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'top', align: 'end', labels: { boxWidth: 10, boxHeight: 10, padding: 14 } },
-        tooltip: {
-          backgroundColor: '#062b48', borderColor: 'rgba(255,255,255,0.14)', borderWidth: 1,
-          padding: 10, titleFont: { weight: '600' },
-          callbacks: { label: (c) => c.dataset.label + ': ' + fmtEUR.format(c.parsed.y) }
-        }
-      },
-      scales: {
-        x: { stacked: true, grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.75)' } },
-        y: { stacked: true, grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { callback: (v) => fmtEURsmall.format(v) } }
-      }
-    }
-  });
+  budgetChart = new Chart(ctx, { type:'bar', data:{ labels, datasets }, options:{ responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ position:'top', align:'end', labels:{ boxWidth:10, boxHeight:10, padding:14 } },
+      tooltip:{ backgroundColor:'#062b48', borderColor:'rgba(255,255,255,0.14)', borderWidth:1, padding:10, titleFont:{ weight:'600' },
+        callbacks:{ label:(c)=>c.dataset.label+': '+fmtEUR.format(c.parsed.y) } } },
+    scales:{ x:{ stacked:true, grid:{ display:false }, ticks:{ color:'rgba(255,255,255,0.75)' } },
+      y:{ stacked:true, grid:{ color:'rgba(255,255,255,0.06)' }, ticks:{ callback:(v)=>fmtEURsmall.format(v) } } } } });
 }
 
 function makeTimelineChart() {
-  // Show all defined periods (regardless of filter) with the selected brands as stacks.
-  // Filtered-out periods are dimmed via opacity on the dataset for the bucketed buckets if not active.
   const keys = activeKeys();
   const labels = PERIOD_DEFS.map(p => p.label);
-  const datasets = state.brands.map(b => ({
-    label: b,
-    data: PERIOD_DEFS.map(p => (POSSIBLE_SALES[b] && POSSIBLE_SALES[b][p.key]) || 0),
-    backgroundColor: BRAND_COLORS[b],
-    borderRadius: 4,
-    barPercentage: 0.7
-  }));
-
-  // Highlight active periods in the x-axis ticks via callback.
-  const activeIdx = new Set(PERIOD_DEFS.map((p,i) => keys.has(p.key) ? i : -1).filter(i => i >= 0));
-
+  const activeIdx = new Set(PERIOD_DEFS.map((p,i) => keys.has(p.key) ? i : -1).filter(i=>i>=0));
   const ctx = document.getElementById('chart-timeline');
   if (timelineChart) timelineChart.destroy();
-  timelineChart = new Chart(ctx, {
-    type: 'bar',
-    data: { labels, datasets },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'top', align: 'end', labels: { boxWidth: 10, boxHeight: 10, padding: 14 } },
-        tooltip: {
-          backgroundColor: '#062b48', borderColor: 'rgba(255,255,255,0.14)', borderWidth: 1,
-          padding: 10, titleFont: { weight: '600' },
-          callbacks: {
-            label: (c) => c.dataset.label + ': ' + fmtEUR.format(c.parsed.y),
-            footer: (items) => {
-              const idx = items[0].dataIndex;
-              return activeIdx.has(idx) ? '✓ in selection' : 'not selected';
-            }
-          }
-        }
-      },
-      scales: {
-        x: {
-          stacked: true,
-          grid: { display: false },
-          ticks: {
-            color: (c) => activeIdx.has(c.index) ? '#00A9FF' : 'rgba(255,255,255,0.42)',
-            font: (c) => ({ weight: activeIdx.has(c.index) ? '600' : '400' }),
-            maxRotation: 30, minRotation: 30
-          }
-        },
-        y: {
-          stacked: true,
-          grid: { color: 'rgba(255,255,255,0.06)' },
-          ticks: { callback: (v) => fmtEURsmall.format(v) }
-        }
-      }
-    }
-  });
+  timelineChart = new Chart(ctx, { type:'bar',
+    data:{ labels, datasets: state.brands.map(b=>({ label:b, data:PERIOD_DEFS.map(p=>(POSSIBLE_SALES[b]&&POSSIBLE_SALES[b][p.key])||0), backgroundColor:BRAND_COLORS[b], borderRadius:4, barPercentage:0.7 })) },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'top', align:'end', labels:{ boxWidth:10, boxHeight:10, padding:14 } },
+        tooltip:{ backgroundColor:'#062b48', borderColor:'rgba(255,255,255,0.14)', borderWidth:1, padding:10, titleFont:{ weight:'600' },
+          callbacks:{ label:(c)=>c.dataset.label+': '+fmtEUR.format(c.parsed.y), footer:(items)=>activeIdx.has(items[0].dataIndex)?'✓ in selection':'not selected' } } },
+      scales:{ x:{ stacked:true, grid:{ display:false },
+          ticks:{ color:(c)=>activeIdx.has(c.index)?'#00A9FF':'rgba(255,255,255,0.42)', font:(c)=>({ weight:activeIdx.has(c.index)?'600':'400' }), maxRotation:30, minRotation:30 } },
+        y:{ stacked:true, grid:{ color:'rgba(255,255,255,0.06)' }, ticks:{ callback:(v)=>fmtEURsmall.format(v) } } } } });
 }
 
 /* ================================================================
    RENDER
    ================================================================ */
+function pctBadgeClass(p) { if(!isFinite(p))return'low'; if(p>=0.9)return'high'; if(p>=0.6)return'mid'; if(p>=0.3)return'low'; return'critical'; }
+function bigPctClass(p)   { if(!isFinite(p))return''; if(p>=0.9)return'success'; if(p>=0.5)return''; if(p>=0.25)return'warning'; return'danger'; }
+
 function renderKPIs(data) {
   document.getElementById('kpi-backorder').textContent = fmtEUR.format(data.totals.backorder);
   document.getElementById('kpi-budget').textContent    = fmtEUR.format(data.totals.budget);
   document.getElementById('kpi-invoiced').textContent  = fmtEUR.format(data.totals.invoiced);
   document.getElementById('kpi-possible').textContent  = fmtEUR.format(data.totals.possible);
-
-  // Period summary text
   const keys = activeKeys();
-  const periodLabels = PERIOD_DEFS.filter(p => keys.has(p.key)).map(p => p.label);
+  const periodLabels = PERIOD_DEFS.filter(p=>keys.has(p.key)).map(p=>p.label);
   document.getElementById('kpi-possible-sub').textContent =
-    periodLabels.length === 0
-      ? 'No period selected'
-      : periodLabels.length === 1
-        ? periodLabels[0]
-        : periodLabels.length + ' periods selected';
-}
-
-function pctBadgeClass(pct) {
-  if (!isFinite(pct)) return 'low';
-  if (pct >= 0.9) return 'high';
-  if (pct >= 0.6) return 'mid';
-  if (pct >= 0.3) return 'low';
-  return 'critical';
-}
-function bigPctClass(pct) {
-  if (!isFinite(pct)) return '';
-  if (pct >= 0.9) return 'success';
-  if (pct >= 0.5) return '';
-  if (pct >= 0.25) return 'warning';
-  return 'danger';
+    periodLabels.length===0 ? 'No period selected' : periodLabels.length===1 ? periodLabels[0] : periodLabels.length+' periods selected';
 }
 
 function renderAnalysis(data) {
-  // Coverage
-  const cov = data.totals.coverage;
   const covEl = document.getElementById('pct-coverage');
-  covEl.textContent = fmtPct(cov);
-  covEl.className = 'big-pct ' + bigPctClass(cov);
+  covEl.textContent = fmtPct(data.totals.coverage);
+  covEl.className = 'big-pct '+bigPctClass(data.totals.coverage);
   document.getElementById('pct-coverage-ctx').innerHTML =
     `Possible Sales <strong>${fmtEUR.format(data.totals.possible)}</strong> of total backorder <strong>${fmtEUR.format(data.totals.backorder)}</strong>`;
 
-  // Budget attainment
-  const att = data.totals.attainment;
   const attEl = document.getElementById('pct-budget');
-  attEl.textContent = fmtPct(att);
-  attEl.className = 'big-pct ' + bigPctClass(att);
-
-  let srcLabel = '';
-  if (state.compare === 'invoiced') srcLabel = 'Invoiced';
-  else if (state.compare === 'possible') srcLabel = 'Possible Sales';
-  else srcLabel = 'Invoiced + Possible Sales';
-
-  document.getElementById('budget-subtitle').textContent = srcLabel + ' ÷ Budget (May 2026)';
+  attEl.textContent = fmtPct(data.totals.attainment);
+  attEl.className = 'big-pct '+bigPctClass(data.totals.attainment);
+  const srcLabel = state.compare==='invoiced'?'Invoiced':state.compare==='possible'?'Possible Sales':'Invoiced + Possible Sales';
+  document.getElementById('budget-subtitle').textContent = srcLabel+' ÷ Budget (May 2026)';
   document.getElementById('pct-budget-ctx').innerHTML =
     `${srcLabel} <strong>${fmtEUR.format(data.totals.numerator)}</strong> against budget <strong>${fmtEUR.format(data.totals.budget)}</strong>`;
 }
@@ -1000,9 +673,7 @@ function renderTable(data) {
   tbody.innerHTML = '';
   state.brands.forEach(b => {
     const p = data.perBrand[b];
-    const attainment = state.compare === 'invoiced' ? p.attainmentInvoiced
-                      : state.compare === 'possible' ? p.attainmentPossible
-                      : p.attainmentBoth;
+    const att = state.compare==='invoiced'?p.attainmentInvoiced:state.compare==='possible'?p.attainmentPossible:p.attainmentBoth;
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><span class="brand-dot" style="background:${BRAND_COLORS[b]}"></span>${b}</td>
@@ -1011,11 +682,9 @@ function renderTable(data) {
       <td>${fmtEUR.format(p.invoiced)}</td>
       <td>${fmtEUR.format(p.budget)}</td>
       <td><span class="pct-badge ${pctBadgeClass(p.coverage)}">${fmtPct(p.coverage)}</span></td>
-      <td><span class="pct-badge ${pctBadgeClass(attainment)}">${fmtPct(attainment)}</span></td>
-    `;
+      <td><span class="pct-badge ${pctBadgeClass(att)}">${fmtPct(att)}</span></td>`;
     tbody.appendChild(tr);
   });
-  // Totals row
   const tr = document.createElement('tr');
   tr.className = 'total-row';
   tr.innerHTML = `
@@ -1025,8 +694,7 @@ function renderTable(data) {
     <td>${fmtEUR.format(data.totals.invoiced)}</td>
     <td>${fmtEUR.format(data.totals.budget)}</td>
     <td><span class="pct-badge ${pctBadgeClass(data.totals.coverage)}">${fmtPct(data.totals.coverage)}</span></td>
-    <td><span class="pct-badge ${pctBadgeClass(data.totals.attainment)}">${fmtPct(data.totals.attainment)}</span></td>
-  `;
+    <td><span class="pct-badge ${pctBadgeClass(data.totals.attainment)}">${fmtPct(data.totals.attainment)}</span></td>`;
   tbody.appendChild(tr);
 }
 
@@ -1041,7 +709,51 @@ function renderAll() {
   renderTable(data);
 }
 
-renderAll();
+/* ================================================================
+   BOOTSTRAP — fetch CSV → populate data → render
+   ================================================================ */
+async function init() {
+  const overlay = document.getElementById('loading-overlay');
+  const errorBanner = document.getElementById('error-banner');
+
+  try {
+    // Adiciona cache-bust para garantir dados sempre frescos
+    const url = CSV_URL + '?t=' + Date.now();
+    const res = await fetch(url);
+
+    if (!res.ok) throw new Error(`HTTP ${res.status} ao buscar o CSV. Verifique a URL em CSV_URL.`);
+
+    const text = await res.text();
+    const rows = parseCSV(text);
+
+    if (rows.length === 0) throw new Error('O arquivo CSV está vazio ou não pôde ser lido.');
+
+    loadCSVData(rows);
+    state.brands = [...BRANDS];
+
+    // Mostra timestamp dos dados
+    const tsBar = document.getElementById('data-timestamp');
+    tsBar.style.display = 'flex';
+    document.getElementById('timestamp-text').textContent =
+      'Data loaded from GitHub · ' + new Date().toLocaleString('pt-BR', { dateStyle:'short', timeStyle:'short' });
+
+    overlay.classList.add('hidden');
+    renderAll();
+
+  } catch (err) {
+    overlay.classList.add('hidden');
+    errorBanner.classList.add('visible');
+    errorBanner.innerHTML = `
+      <strong>⚠ Não foi possível carregar os dados do CSV.</strong><br>
+      ${err.message}<br><br>
+      <strong>Como corrigir:</strong> Abra o HTML em um editor de texto, localize a linha <code>const CSV_URL = '...'</code>
+      e substitua pelo endereço raw do seu arquivo no GitHub.<br>
+      Exemplo: <code>https://raw.githubusercontent.com/SEU_USUARIO/SEU_REPO/main/data/summary.csv</code>
+    `;
+  }
+}
+
+init();
 </script>
 </body>
 </html>
