@@ -337,7 +337,7 @@ function fersaLogout() {
    Coloque aqui a URL raw do seu CSV no GitHub.
    Exemplo: https://raw.githubusercontent.com/SEU_USUARIO/SEU_REPOSITORIO/main/data/summary.csv
    ================================================================ */
-const CSV_URL = 'https://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@raw.githubusercontent.com/FBRA-BrunoPrestes/portal-fbra/refs/heads/main/netlify/data/summary.csv';
+const CSV_URL = 'https://raw.githubusercontent.com/FBRA-BrunoPrestes/portal-fbra/main/netlify/data/summary.csv';
 
 /* ================================================================
    CSV PARSER
@@ -716,10 +716,18 @@ async function init() {
   const overlay = document.getElementById('loading-overlay');
   const errorBanner = document.getElementById('error-banner');
 
-  try {
+ try {
     // Adiciona cache-bust para garantir dados sempre frescos
     const url = CSV_URL + '?t=' + Date.now();
-    const res = await fetch(url);
+    
+    // INSIRA SEU TOKEN DE ACESSO DO GITHUB AQUI DENTRO DAS ASPAS:
+    const GITHUB_TOKEN = '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';
+
+    const res = await fetch(url, {
+      headers: {
+        'Authorization': `token ${GITHUB_TOKEN}`
+      }
+    });
 
     if (!res.ok) throw new Error(`HTTP ${res.status} ao buscar o CSV. Verifique a URL em CSV_URL.`);
 
