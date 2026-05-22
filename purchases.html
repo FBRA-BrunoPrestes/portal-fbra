@@ -839,59 +839,94 @@ document.getElementById('fSearch').addEventListener('input', () => {
 ['fBrand','fOrigin','fStatus','fYear','fMonth'].forEach(id => document.getElementById(id).addEventListener('change', filterAndRender));
 
 async function loadData() {
-  // Show loading state
-  document.getElementById('tbody').innerHTML =
-    '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">⏳ Loading data…</td></tr>';
+  // Show loading overlay
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:48px 20px;color:var(--muted);font-size:13px">⏳ Loading data…</td></tr>';
 
   try {
     const res = await fetch('https://raw.githubusercontent.com/FBRA-BrunoPrestes/portal-fbra/refs/heads/main/netlify/data/purchases.csv');
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' — CSV not found at the configured URL.');
     const text = await res.text();
     RAW = parseCSV(text);
+
+    if (!RAW.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:48px 20px;color:#c07800;font-size:13px">⚠️ CSV loaded but contains no data rows.</td></tr>';
+      return;
+    }
     init();
+
   } catch (e) {
-    document.getElementById('tbody').innerHTML =
-      '<tr><td colspan="7" style="text-align:center;padding:40px;color:#D32F2F">⚠️ Failed to load data: ' + e.message + '</td></tr>';
+    tbody.innerHTML =
+      '<tr><td colspan="7" style="text-align:center;padding:48px 20px;color:#D32F2F;font-size:13px">' +
+      '⚠️ Failed to load data: ' + e.message + '</td></tr>';
     console.error('Data load error:', e);
   }
 }
 
 function parseCSV(text) {
   const rows = [];
-  const lines = text.split('\n');
+  // Handle both 
+ (Windows) and 
+ line endings
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+
+  // Detect header row - find column indices dynamically
+  const header = splitCSVLine(lines[0]);
+  const idx = {
+    item_id:    header.findIndex(h => /item.?id/i.test(h)),
+    catalog_nr: header.findIndex(h => /catalog/i.test(h)),
+    eta:        header.findIndex(h => /eta/i.test(h)),
+    status:     header.findIndex(h => /status/i.test(h)),
+    origin:     header.findIndex(h => /origin/i.test(h)),
+    qty:        header.findIndex(h => /qty|quantity/i.test(h)),
+    brand:      header.findIndex(h => /brand/i.test(h)),
+    month:      header.findIndex(h => /month/i.test(h)),
+    year:       header.findIndex(h => /year/i.test(h)),
+    cost:       header.findIndex(h => /cost|price|total/i.test(h))
+  };
+
+  // Fallback to positional if header detection fails
+  const useHeader = Object.values(idx).every(v => v >= 0);
+  const pos = useHeader ? idx : { item_id:0, catalog_nr:1, eta:2, status:3, origin:4, qty:5, brand:6, month:7, year:8, cost:9 };
+
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
-    const cols = [];
-    let inQuote = false, cur = '';
-    for (let j = 0; j < line.length; j++) {
-      const c = line[j];
-      if (c === '"') {
-        inQuote = !inQuote;
-      } else if (c === ',' && !inQuote) {
-        cols.push(cur);
-        cur = '';
-      } else {
-        cur += c;
-      }
-    }
-    cols.push(cur);
-    if (cols.length >= 10) {
-      rows.push([
-        cols[0],         // Item ID
-        cols[1],         // Catalog Nr.
-        cols[2],         // ETA
-        cols[3],         // Status
-        cols[4],         // Origin
-        Number(cols[5]), // Qty
-        cols[6],         // Brand
-        cols[7],         // Month
-        Number(cols[8]), // Year
-        Number(cols[9])  // Total Cost
-      ]);
-    }
+    const cols = splitCSVLine(line);
+    if (cols.length < 10) continue;
+    rows.push([
+      cols[pos.item_id],
+      cols[pos.catalog_nr],
+      cols[pos.eta],
+      cols[pos.status],
+      cols[pos.origin],
+      Number(cols[pos.qty])  || 0,
+      cols[pos.brand],
+      cols[pos.month],
+      Number(cols[pos.year]) || 0,
+      Number(cols[pos.cost]) || 0
+    ]);
   }
   return rows;
+}
+
+function splitCSVLine(line) {
+  const cols = [];
+  let inQuote = false, cur = '';
+  for (let j = 0; j < line.length; j++) {
+    const c = line[j];
+    if (c === '"') {
+      if (inQuote && line[j+1] === '"') { cur += '"'; j++; } // escaped quote
+      else { inQuote = !inQuote; }
+    } else if (c === ',' && !inQuote) {
+      cols.push(cur.trim());
+      cur = '';
+    } else {
+      cur += c;
+    }
+  }
+  cols.push(cur.trim());
+  return cols;
 }
 
 loadData();
