@@ -648,13 +648,18 @@
 
 <script>
 /* ── FERSA AI CHAT ──────────────────────────────────────────────── */
-const chatOverlay   = document.getElementById('chatOverlay');
-const chatMessages  = document.getElementById('chatMessages');
-const chatInput     = document.getElementById('chatInput');
-const chatSendBtn   = document.getElementById('chatSendBtn');
+const chatOverlay     = document.getElementById('chatOverlay');
+const chatMessages    = document.getElementById('chatMessages');
+const chatInput       = document.getElementById('chatInput');
+const chatSendBtn     = document.getElementById('chatSendBtn');
 const chatSuggestions = document.getElementById('chatSuggestions');
 
 let isLoading = false;
+
+// ── FIX 1: Conversation history array ───────────────────────────
+// Stores all messages sent/received so the full context is always
+// passed to the backend on every request.
+let conversationHistory = [];
 
 function openChat() {
   chatOverlay.classList.add('open');
@@ -668,12 +673,12 @@ function handleOverlayClick(e) {
 }
 
 function appendMsg(role, text) {
-  const msg = document.createElement('div');
+  const msg    = document.createElement('div');
   msg.className = 'msg ' + role;
-  const avatar = document.createElement('div');
+  const avatar  = document.createElement('div');
   avatar.className = 'msg-avatar';
   avatar.textContent = role === 'user' ? 'Eu' : 'AI';
-  const bubble = document.createElement('div');
+  const bubble  = document.createElement('div');
   bubble.className = 'msg-bubble';
   bubble.textContent = text;
   msg.appendChild(avatar);
@@ -696,6 +701,61 @@ function removeTyping() {
   if (t) t.remove();
 }
 
+// ── FIX 2: Collect portal data visible on the current page ───────
+// Reads whatever data is already rendered in the DOM across the
+// portal modules (Purchases, Stock, Summary) and serialises it as
+// a plain-text context block that will be injected into the system
+// prompt on the backend.  Add more selectors here as new modules
+// are built.
+function collectPortalContext() {
+  const sections = [];
+
+  // Helper: grab text content from a CSS selector if it exists
+  function grab(selector, label) {
+    const el = document.querySelector(selector);
+    if (el && el.textContent.trim()) {
+      sections.push(`${label}: ${el.textContent.trim()}`);
+    }
+  }
+
+  // Helper: grab ALL matching elements (e.g. table rows)
+  function grabAll(selector, label) {
+    const els = document.querySelectorAll(selector);
+    if (els.length) {
+      const lines = Array.from(els).map(e => e.textContent.trim()).filter(Boolean);
+      sections.push(`${label}:\n  ${lines.join('\n  ')}`);
+    }
+  }
+
+  // ── Purchases module ────────────────────────────────────────────
+  grab('#totalBackorder,   [data-kpi="totalBackorder"],   .kpi-backorder',   'Total Backorder Qty');
+  grab('#totalTransit,     [data-kpi="totalTransit"],     .kpi-transit',     'Total Transit Qty');
+  grab('#openOrders,       [data-kpi="openOrders"],       .kpi-open-orders', 'Open Orders');
+  grabAll('table.purchases-table tbody tr, #purchasesTable tbody tr', 'Purchases rows');
+
+  // ── Stock & Sales module ─────────────────────────────────────────
+  grab('#totalStock,   [data-kpi="totalStock"],   .kpi-stock',   'Total Stock Qty');
+  grab('#totalSales,   [data-kpi="totalSales"],   .kpi-sales',   'Total Sales Qty');
+  grab('#fillRate,     [data-kpi="fillRate"],     .kpi-fillrate','Fill Rate');
+  grabAll('table.stock-table tbody tr, #stockTable tbody tr', 'Stock rows');
+
+  // ── Summary / Revenue module ─────────────────────────────────────
+  grab('#totalRevenue, [data-kpi="totalRevenue"], .kpi-revenue', 'Total Revenue');
+  grab('#budgetTarget, [data-kpi="budgetTarget"], .kpi-budget',  'Budget Target');
+  grabAll('table.summary-table tbody tr, #summaryTable tbody tr', 'Summary rows');
+
+  // ── Generic: any element with a data-kpi attribute ───────────────
+  document.querySelectorAll('[data-kpi]').forEach(el => {
+    const key = el.getAttribute('data-kpi');
+    const val = el.textContent.trim();
+    if (key && val) sections.push(`${key}: ${val}`);
+  });
+
+  return sections.length
+    ? '=== PORTAL DATA (current page) ===\n' + sections.join('\n') + '\n=== END PORTAL DATA ==='
+    : '';
+}
+
 async function sendMessage() {
   const question = chatInput.value.trim();
   if (!question || isLoading) return;
@@ -707,15 +767,25 @@ async function sendMessage() {
   chatInput.value = '';
   chatInput.style.height = 'auto';
 
+  // FIX 1 — add user turn to history
+  conversationHistory.push({ role: 'user', content: question });
+
   isLoading = true;
   chatSendBtn.disabled = true;
   appendTyping();
 
   try {
+    // FIX 2 — collect whatever data is currently visible in the portal
+    const portalContext = collectPortalContext();
+
     const res = await fetch('/.netlify/functions/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question })
+      body: JSON.stringify({
+        question,                          // kept for backward-compat
+        history: conversationHistory,      // FIX 1: full conversation history
+        portalContext                      // FIX 2: live portal data snapshot
+      })
     });
 
     const data = await res.json();
@@ -723,12 +793,17 @@ async function sendMessage() {
 
     if (data.error) {
       appendMsg('bot', '⚠️ Error: ' + data.error);
+      // Remove last user message from history on error so it can be retried
+      conversationHistory.pop();
     } else {
       appendMsg('bot', data.answer);
+      // FIX 1 — add assistant reply to history so next turn has full context
+      conversationHistory.push({ role: 'assistant', content: data.answer });
     }
   } catch (err) {
     removeTyping();
     appendMsg('bot', '⚠️ Could not connect to the assistant. Please check your connection and try again.');
+    conversationHistory.pop();
   } finally {
     isLoading = false;
     chatSendBtn.disabled = false;
