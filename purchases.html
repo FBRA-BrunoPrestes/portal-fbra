@@ -865,60 +865,90 @@ async function loadData() {
 
 function parseCSV(text) {
   const rows = [];
-  // Handle both 
- (Windows) and 
- line endings
+
+  // Normalise line endings
   const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
 
-  // Detect header row - find column indices dynamically
-  const header = splitCSVLine(lines[0]);
-  const idx = {
+  // Auto-detect delimiter (semicolon or comma)
+  const delim = (lines[0] || '').includes(';') ? ';' : ',';
+
+  // Map header names → column indices
+  const header = lines[0].trim().split(delim).map(h => h.replace(/^"|"$/g, '').trim().toLowerCase());
+  const col = {
     item_id:    header.findIndex(h => /item.?id/i.test(h)),
     catalog_nr: header.findIndex(h => /catalog/i.test(h)),
-    eta:        header.findIndex(h => /eta/i.test(h)),
-    status:     header.findIndex(h => /status/i.test(h)),
-    origin:     header.findIndex(h => /origin/i.test(h)),
+    eta:        header.findIndex(h => /^eta$/i.test(h)),
+    status:     header.findIndex(h => /^status$/i.test(h)),
+    origin:     header.findIndex(h => /^origin$/i.test(h)),
     qty:        header.findIndex(h => /qty|quantity/i.test(h)),
-    brand:      header.findIndex(h => /brand/i.test(h)),
-    month:      header.findIndex(h => /month/i.test(h)),
-    year:       header.findIndex(h => /year/i.test(h)),
+    brand:      header.findIndex(h => /^brand$/i.test(h)),
+    month:      header.findIndex(h => /^month$/i.test(h)),
+    year:       header.findIndex(h => /^year$/i.test(h)),
     cost:       header.findIndex(h => /cost|price|total/i.test(h))
   };
+  // Fallback to positional if any column not found
+  if (Object.values(col).some(v => v < 0)) {
+    Object.assign(col, {item_id:0,catalog_nr:1,eta:2,status:3,origin:4,qty:5,brand:6,month:7,year:8,cost:9});
+  }
 
-  // Fallback to positional if header detection fails
-  const useHeader = Object.values(idx).every(v => v >= 0);
-  const pos = useHeader ? idx : { item_id:0, catalog_nr:1, eta:2, status:3, origin:4, qty:5, brand:6, month:7, year:8, cost:9 };
+  // English → Portuguese month mapping (to match dashboard filters)
+  const MONTH_MAP = {
+    JAN:'JAN', FEB:'FEV', MAR:'MAR', APR:'ABR', MAY:'MAI', JUN:'JUN',
+    JUL:'JUL', AUG:'AGO', SEP:'SET', OCT:'OUT', NOV:'NOV', DEC:'DEZ'
+  };
 
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
-    const cols = splitCSVLine(line);
+    const cols = splitLine(line, delim);
     if (cols.length < 10) continue;
+
+    // ── ETA: convert DD/MM/YYYY → YYYY-MM-DD ──────────────────────────
+    let eta = cols[col.eta];
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(eta)) {
+      const [d, m, y] = eta.split('/');
+      eta = `${y}-${m}-${d}`;
+    }
+
+    // ── Month: map English → Portuguese abbreviation ───────────────────
+    const rawMonth = cols[col.month].toUpperCase();
+    const month = MONTH_MAP[rawMonth] || rawMonth;
+
+    // ── Cost: strip currency symbol and convert European number format ──
+    // e.g. "€ 4.042,55"  →  4042.55
+    //      "€ 120,87"    →  120.87
+    const costStr = cols[col.cost]
+      .replace(/[€$£\u20AC]/g, '')   // strip currency symbols
+      .replace(/\s/g, '')             // strip spaces
+      .replace(/\./g, '')             // remove thousands separator (dot)
+      .replace(',', '.');              // decimal comma → dot
+    const cost = parseFloat(costStr) || 0;
+
     rows.push([
-      cols[pos.item_id],
-      cols[pos.catalog_nr],
-      cols[pos.eta],
-      cols[pos.status],
-      cols[pos.origin],
-      Number(cols[pos.qty])  || 0,
-      cols[pos.brand],
-      cols[pos.month],
-      Number(cols[pos.year]) || 0,
-      Number(cols[pos.cost]) || 0
+      cols[col.item_id],
+      cols[col.catalog_nr],
+      eta,
+      cols[col.status],
+      cols[col.origin],
+      parseInt(cols[col.qty], 10) || 0,
+      cols[col.brand],
+      month,
+      parseInt(cols[col.year], 10) || 0,
+      cost
     ]);
   }
   return rows;
 }
 
-function splitCSVLine(line) {
+function splitLine(line, delim) {
   const cols = [];
   let inQuote = false, cur = '';
   for (let j = 0; j < line.length; j++) {
     const c = line[j];
     if (c === '"') {
-      if (inQuote && line[j+1] === '"') { cur += '"'; j++; } // escaped quote
+      if (inQuote && line[j + 1] === '"') { cur += '"'; j++; } // escaped quote ""
       else { inQuote = !inQuote; }
-    } else if (c === ',' && !inQuote) {
+    } else if (c === delim && !inQuote) {
       cols.push(cur.trim());
       cur = '';
     } else {
