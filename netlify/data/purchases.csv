@@ -1,4 +1,4 @@
-item_id;catalog_nr;eta;status;origin;qty;brand;month;year;total_cost
+Item ID;Catalog Nr.;ETA;Status;Origin;Qty;Brand;Month;Year;Total Cost
 1,001E+13;AAS 368 A/362 A;03/07/2026;Transit;China;817;FERSA;JUL;2026;€ 4.042,55
 1,001E+13;AAS 368 A/362 A;29/07/2026;Backorder;China;323;FERSA;JUL;2026;€ 1.598,22
 1,001E+13;AAS 368 A/362 X;24/07/2026;Backorder;China;40;FERSA;JUL;2026;€ 120,87
