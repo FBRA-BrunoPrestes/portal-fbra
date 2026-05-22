@@ -584,7 +584,7 @@ let chartM = null, chartB = null;
 let debTimer = null;
 
 /* ── UTILS ─────────────────────────────────────────── */
-function pn(s){ if(!s||s==='')return 0; return parseFloat(String(s).replace(/\s/g,'').replace(',','.'))||0; }
+function pn(s){ if(!s||s==='')return 0; return parseFloat(String(s).trim().replace(/\./g,'').replace(',','.'))||0; }
 
 function parseDate(s){
   if(!s)return null;
