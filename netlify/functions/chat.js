@@ -1,26 +1,20 @@
 /**
  * Netlify Function: chat.js
  * Path in your repo: netlify/functions/chat.js
+ *
+ * Strategy: on-demand search
+ *  1. First call to Claude (tiny prompt): extract filters from the user question.
+ *  2. Filter CSVs locally on the server using those filters.
+ *  3. Second call to Claude: answer the question using only the relevant rows.
  */
 
-const CSV_SOURCES = [
-  {
-    key: 'purchases',
-    label: 'Purchases (backorders & transit)',
-    url: 'https://raw.githubusercontent.com/FBRA-BrunoPrestes/portal-fbra/refs/heads/main/netlify/data/purchases.csv',
-  },
-  {
-    key: 'summary',
-    label: 'Summary (revenue vs budget by brand)',
-    url: 'https://raw.githubusercontent.com/FBRA-BrunoPrestes/portal-fbra/refs/heads/main/netlify/data/summary.csv',
-  },
-  {
-    key: 'sales_fill_rate',
-    label: 'Sales Fill Rate',
-    url: 'https://raw.githubusercontent.com/FBRA-BrunoPrestes/portal-fbra/refs/heads/main/netlify/data/sales_fill_rate.csv',
-  },
-];
+const CSV_SOURCES = {
+  purchases: 'https://raw.githubusercontent.com/FBRA-BrunoPrestes/portal-fbra/refs/heads/main/netlify/data/purchases.csv',
+  summary:   'https://raw.githubusercontent.com/FBRA-BrunoPrestes/portal-fbra/refs/heads/main/netlify/data/summary.csv',
+  sales_fill_rate: 'https://raw.githubusercontent.com/FBRA-BrunoPrestes/portal-fbra/refs/heads/main/netlify/data/sales_fill_rate.csv',
+};
 
+// ── CSV parser ────────────────────────────────────────────────────────────────
 function parseCSV(text) {
   const lines = text.trim().split('\n').filter(Boolean);
   if (lines.length < 2) return { headers: [], rows: [] };
@@ -34,82 +28,108 @@ function parseCSV(text) {
   return { headers, rows };
 }
 
-async function fetchCSV(source) {
+async function fetchCSV(key) {
   try {
-    const res = await fetch(source.url);
+    const res = await fetch(CSV_SOURCES[key]);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const text = await res.text();
-    const { headers, rows } = parseCSV(text);
-    return { key: source.key, label: source.label, headers, rows, error: null };
+    return parseCSV(text);
   } catch (err) {
-    console.error('[chat.js] Failed to fetch ' + source.key + ':', err.message);
-    return { key: source.key, label: source.label, headers: [], rows: [], error: err.message };
+    console.error('[chat.js] Failed to fetch ' + key + ':', err.message);
+    return { headers: [], rows: [] };
   }
 }
 
-// Purchases: group by product to reduce token usage (~90% smaller)
-function compressPurchases(rows) {
-  const map = {};
-  for (const row of rows) {
-    const key = (row['catalog_nr'] || '') + '||' + (row['brand'] || '') + '||' + (row['origin'] || '');
-    if (!map[key]) {
-      map[key] = {
-        catalog_nr: row['catalog_nr'] || '',
-        brand:      row['brand'] || '',
-        origin:     row['origin'] || '',
-        transit:    0,
-        backorder:  0,
-        next_eta:   row['eta'] || '',
-      };
+// ── Claude API call helper ────────────────────────────────────────────────────
+async function callClaude(systemPrompt, messages, maxTokens) {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': process.env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: maxTokens,
+      system: systemPrompt,
+      messages,
+    }),
+  });
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error('API ' + response.status + ': ' + err);
+  }
+  const data = await response.json();
+  return data.content && data.content[0] ? data.content[0].text : '';
+}
+
+// ── Step 1: extract intent and filters from the question ─────────────────────
+async function extractFilters(question, history) {
+  const systemPrompt = `You extract search filters from a user question about a purchases/stock portal.
+Return ONLY a valid JSON object with these fields (all optional):
+{
+  "datasets": ["purchases", "summary", "sales_fill_rate"],  // which datasets are needed
+  "catalog_nr": "partial product name or reference to search for",
+  "brand": "FERSA or NKE or PFI or A&S",
+  "status": "Transit or Backorder",
+  "origin": "China or Spain or Austria",
+  "month": "JAN/FEB/MAR/APR/MAY/JUN/JUL/AUG/SEP/OCT/NOV/DEC",
+  "is_total": true,   // true if user wants an overall total (no specific product)
+  "is_summary": true  // true if question is about revenue/budget/sales forecast
+}
+Only include fields that are clearly mentioned or implied. No explanation, only JSON.`;
+
+  // Use last 2 turns of history for context (keeps this call tiny)
+  const recentHistory = history.slice(-4);
+  const messages = [
+    ...recentHistory,
+    { role: 'user', content: question }
+  ];
+
+  try {
+    const raw = await callClaude(systemPrompt, messages, 200);
+    const clean = raw.replace(/```json|```/g, '').trim();
+    return JSON.parse(clean);
+  } catch (e) {
+    console.error('[chat.js] Filter extraction failed:', e.message);
+    // Fallback: fetch purchases only, no filters
+    return { datasets: ['purchases'], is_total: true };
+  }
+}
+
+// ── Step 2: filter rows locally ───────────────────────────────────────────────
+function filterRows(rows, filters) {
+  return rows.filter(row => {
+    if (filters.catalog_nr) {
+      const search = filters.catalog_nr.toLowerCase();
+      if (!(row['catalog_nr'] || '').toLowerCase().includes(search)) return false;
     }
-    const qty = parseInt(row['qty']) || 0;
-    if (row['status'] === 'Transit')   map[key].transit   += qty;
-    if (row['status'] === 'Backorder') map[key].backorder += qty;
-    if (row['eta'] && (!map[key].next_eta || row['eta'] < map[key].next_eta)) {
-      map[key].next_eta = row['eta'];
+    if (filters.brand) {
+      if ((row['brand'] || '').toUpperCase() !== filters.brand.toUpperCase()) return false;
     }
-  }
-  const lines = ['catalog_nr;brand;origin;transit_qty;backorder_qty;next_eta'];
-  for (const r of Object.values(map)) {
-    lines.push([r.catalog_nr, r.brand, r.origin, r.transit, r.backorder, r.next_eta].join(';'));
-  }
-  return lines.join('\n');
+    if (filters.status) {
+      if ((row['status'] || '').toLowerCase() !== filters.status.toLowerCase()) return false;
+    }
+    if (filters.origin) {
+      if ((row['origin'] || '').toLowerCase() !== filters.origin.toLowerCase()) return false;
+    }
+    if (filters.month) {
+      if ((row['month'] || '').toUpperCase() !== filters.month.toUpperCase()) return false;
+    }
+    return true;
+  });
 }
 
-function datasetToText(dataset) {
-  const key   = dataset.key;
-  const label = dataset.label;
-  const rows  = dataset.rows;
-  const headers = dataset.headers;
-  const error = dataset.error;
-
-  if (error)             return '## ' + label + '\n[ERROR: ' + error + ']\n';
-  if (rows.length === 0) return '## ' + label + '\n[No data available]\n';
-
-  if (key === 'purchases') {
-    const productCount = new Set(rows.map(r => r['catalog_nr'])).size;
-    return [
-      '## ' + label,
-      'Grouped by product. Format: catalog_nr;brand;origin;transit_qty;backorder_qty;next_eta',
-      'Unique products: ' + productCount + ' | Total lines in source: ' + rows.length,
-      '',
-      compressPurchases(rows),
-      '',
-    ].join('\n');
-  }
-
-  const headerLine = headers.join(';');
-  const dataLines  = rows.map(row => headers.map(h => row[h] || '').join(';'));
-  return [
-    '## ' + label,
-    'Columns: ' + headerLine,
-    'Rows: ' + rows.length,
-    '',
-    dataLines.join('\n'),
-    '',
-  ].join('\n');
+// ── Format filtered rows as compact CSV text ──────────────────────────────────
+function rowsToText(headers, rows, label) {
+  if (rows.length === 0) return label + ': no matching rows found.';
+  const lines = [headers.join(';')];
+  rows.forEach(row => lines.push(headers.map(h => row[h] || '').join(';')));
+  return label + ' (' + rows.length + ' rows):\n' + lines.join('\n');
 }
 
+// ── Main handler ──────────────────────────────────────────────────────────────
 exports.handler = async function (event) {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
@@ -120,60 +140,71 @@ exports.handler = async function (event) {
   catch { return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON body' }) }; }
 
   const { question, history = [] } = body;
-
   if (!question && history.length === 0) {
     return { statusCode: 400, body: JSON.stringify({ error: 'No question provided' }) };
   }
 
-  const datasets  = await Promise.all(CSV_SOURCES.map(fetchCSV));
-  const dataBlock = datasets.map(datasetToText).join('\n---\n\n');
+  try {
+    // ── Step 1: extract filters (tiny call, ~300 tokens) ───────────────────
+    const filters = await extractFilters(question, history);
+    console.log('[chat.js] Filters:', JSON.stringify(filters));
 
-  const systemPrompt = `You are the AI data assistant for the Fersa FBRA internal portal.
+    // ── Step 2: fetch and filter only the needed datasets ─────────────────
+    const dataParts = [];
+    const needed = filters.datasets || ['purchases'];
+
+    if (needed.includes('purchases')) {
+      const { headers, rows } = await fetchCSV('purchases');
+      if (rows.length > 0) {
+        const filtered = filters.is_total ? rows : filterRows(rows, filters);
+        // For totals, compress to summary stats instead of all rows
+        if (filters.is_total) {
+          const transit   = rows.filter(r => r['status'] === 'Transit').reduce((s, r) => s + (parseInt(r['qty']) || 0), 0);
+          const backorder = rows.filter(r => r['status'] === 'Backorder').reduce((s, r) => s + (parseInt(r['qty']) || 0), 0);
+          const brands    = [...new Set(rows.map(r => r['brand']))];
+          dataParts.push('## Purchases — Overall totals\nTotal Transit qty: ' + transit + '\nTotal Backorder qty: ' + backorder + '\nBrands: ' + brands.join(', '));
+        } else {
+          dataParts.push(rowsToText(headers, filtered, '## Purchases'));
+        }
+      }
+    }
+
+    if (needed.includes('summary')) {
+      const { headers, rows } = await fetchCSV('summary');
+      if (rows.length > 0) {
+        dataParts.push(rowsToText(headers, rows, '## Summary (revenue vs budget)'));
+      }
+    }
+
+    if (needed.includes('sales_fill_rate')) {
+      const { headers, rows } = await fetchCSV('sales_fill_rate');
+      if (rows.length > 0) {
+        const filtered = filters.brand
+          ? rows.filter(r => (r['brand'] || '').toUpperCase() === filters.brand.toUpperCase())
+          : rows;
+        dataParts.push(rowsToText(headers, filtered, '## Sales Fill Rate'));
+      }
+    }
+
+    const dataBlock = dataParts.join('\n\n---\n\n');
+
+    // ── Step 3: answer call with filtered data ─────────────────────────────
+    const systemPrompt = `You are the AI data assistant for the Fersa FBRA internal portal.
 Answer in the same language the user writes in (Portuguese or English).
 Be concise and data-driven. Always cite specific figures. Never invent values.
-
-You have access to LIVE portal data below (fetched at request time).
-You can answer:
-- Transit or backorder qty for any product or brand (use transit_qty / backorder_qty columns)
-- Revenue vs budget by brand (use summary data)
-- Comparisons, totals, filters by brand, origin, month, etc.
-- Follow-up questions using the conversation history in the messages
-
-If a product is not found, say so clearly. Format numbers clearly.
+If a product is not found in the data, say so clearly.
+Use the conversation history for follow-up context.
 
 ---
-# LIVE PORTAL DATA
+# RELEVANT PORTAL DATA (pre-filtered for this question)
 
 ${dataBlock}`.trim();
 
-  const messages = history.length > 0
-    ? history
-    : [{ role: 'user', content: question }];
+    const messages = history.length > 0
+      ? history
+      : [{ role: 'user', content: question }];
 
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
-        system: systemPrompt,
-        messages,
-      }),
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error('[chat.js] Anthropic API error:', errText);
-      return { statusCode: 502, body: JSON.stringify({ error: 'Anthropic API error ' + response.status + ': ' + errText }) };
-    }
-
-    const data   = await response.json();
-    const answer = data && data.content && data.content[0] ? data.content[0].text : 'No response received.';
+    const answer = await callClaude(systemPrompt, messages, 1024);
 
     return {
       statusCode: 200,
@@ -182,7 +213,10 @@ ${dataBlock}`.trim();
     };
 
   } catch (err) {
-    console.error('[chat.js] Function error:', err);
-    return { statusCode: 500, body: JSON.stringify({ error: 'Internal server error: ' + err.message }) };
+    console.error('[chat.js] Error:', err.message);
+    return {
+      statusCode: 502,
+      body: JSON.stringify({ error: err.message }),
+    };
   }
 };
