@@ -149,6 +149,13 @@
   td.cat.clickable:hover { color: var(--fersa-electric); text-decoration-style: solid; }
   html.dark td.tid.clickable:hover { color: var(--fersa-electric); }
   html.dark td.cat.clickable:hover { color: var(--fersa-soul); }
+  td.inv { font-family:'Courier New',monospace; font-size:11px; color:var(--text); }
+  td.inv.inv-empty { color:var(--muted); }
+  td.inv.clickable {
+    cursor: pointer; text-decoration: underline; text-decoration-style: dotted;
+    text-underline-offset: 3px; transition: color .15s, text-decoration-style .15s;
+  }
+  td.inv.clickable:hover { color: var(--fersa-electric); text-decoration-style: solid; }
   td.eta { font-weight:600; }
   td.eta.soon   { color:var(--transit-color); }
   td.eta.medium { color:#c07800; }
@@ -230,7 +237,7 @@
 
     /* Table: scroll horizontal + fonte menor */
     .table-wrap { padding: 10px 14px 0; }
-    table       { font-size: 12px; min-width: 520px; }
+    table       { font-size: 12px; min-width: 600px; }
     thead th    { padding: 10px 10px; font-size: 9px; }
     tbody td    { padding: 9px 10px; }
     td.tid      { font-size: 10px; }
@@ -422,6 +429,10 @@
       <span class="sa">▾</span>
     </div>
     <div class="fg">
+      <span class="fg-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
+      <input type="text" id="fInvoice" placeholder="Invoice Nr..." style="min-width:160px">
+    </div>
+    <div class="fg">
       <span class="fg-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
       <select id="fYear"><option value="">All Years</option><option>2026</option><option>2027</option><option>2028</option></select>
       <span class="sa">▾</span>
@@ -454,13 +465,14 @@
 <div class="table-wrap">
   <table>
     <thead><tr>
-      <th onclick="srt(0)">Item ID <span class="si">↕</span></th>
-      <th onclick="srt(1)">Catalog Nr. <span class="si">↕</span></th>
-      <th onclick="srt(2)">ETA <span class="si">↕</span></th>
-      <th onclick="srt(3)">Status <span class="si">↕</span></th>
-      <th onclick="srt(4)">Origin <span class="si">↕</span></th>
-      <th onclick="srt(5)">Qty <span class="si">↕</span></th>
-      <th onclick="srt(6)">Brand <span class="si">↕</span></th>
+      <th data-col="0" onclick="srt(0)">Item ID <span class="si">↕</span></th>
+      <th data-col="1" onclick="srt(1)">Catalog Nr. <span class="si">↕</span></th>
+      <th data-col="2" onclick="srt(2)">ETA <span class="si">↕</span></th>
+      <th data-col="3" onclick="srt(3)">Status <span class="si">↕</span></th>
+      <th data-col="10" onclick="srt(10)">Invoice Nr. <span class="si">↕</span></th>
+      <th data-col="4" onclick="srt(4)">Origin <span class="si">↕</span></th>
+      <th data-col="5" onclick="srt(5)">Qty <span class="si">↕</span></th>
+      <th data-col="6" onclick="srt(6)">Brand <span class="si">↕</span></th>
     </tr></thead>
     <tbody id="tbody"></tbody>
   </table>
@@ -529,6 +541,7 @@ function applyFilters() {
   const st = document.getElementById('fStatus').value;
   const yr = document.getElementById('fYear').value;
   const ms = document.getElementById('fMonth').value;
+  const inv = document.getElementById('fInvoice').value.toLowerCase().trim();
 
   filtered = RAW.filter(r => {
     if (q) {
@@ -542,6 +555,7 @@ function applyFilters() {
     if (st && r[3] !== st) return false;
     if (yr && Number(r[8]) !== Number(yr)) return false;
     if (ms && r[7] !== ms) return false;
+    if (inv && !String(r[10]).toLowerCase().includes(inv)) return false;
     return true;
   });
 
@@ -677,6 +691,9 @@ function renderTable() {
       <td class="cat clickable" onclick='filterByCell(${JSON.stringify(r[1])}, "cat")' title="Filter by this Catalog Nr.">${r[1]}</td>
       <td class="eta ${etaClass(r[2])}">${fmtDate(r[2])}</td>
       <td><span class="badge ${r[3]}"><span class="bd"></span>${r[3]}</span></td>
+      ${r[10]
+        ? `<td class="inv clickable" onclick='filterByCell(${JSON.stringify(r[10])}, "invoice")' title="Filter by this Invoice Nr.">${r[10]}</td>`
+        : `<td class="inv inv-empty">—</td>`}
       <td>${r[4]}</td>
       <td class="qty">${fmt(r[5])}</td>
       <td><span class="bp ${bpClass(r[6])}">${r[6]}</span></td>
@@ -718,28 +735,35 @@ function goPage(p) {
 function srt(col) {
   if (sortCol === col) sortDir *= -1;
   else { sortCol = col; sortDir = 1; }
-  document.querySelectorAll('thead th').forEach((th, i) => {
-    th.classList.toggle('sorted', i === col);
+  document.querySelectorAll('thead th').forEach((th) => {
+    const c = Number(th.dataset.col);
+    th.classList.toggle('sorted', c === col);
     const ic = th.querySelector('.si');
-    if (ic) ic.textContent = i === col ? (sortDir === 1 ? '↑' : '↓') : '↕';
+    if (ic) ic.textContent = c === col ? (sortDir === 1 ? '↑' : '↓') : '↕';
   });
   applyFilters();
   renderTable();
 }
 
-function filterByCell(value) {
+function filterByCell(value, type) {
   document.getElementById('fBrand').value = '';
   document.getElementById('fOrigin').value = '';
   document.getElementById('fStatus').value = '';
   document.getElementById('fYear').value = '';
   document.getElementById('fMonth').value = '';
-  document.getElementById('fSearch').value = value;
+  if (type === 'invoice') {
+    document.getElementById('fSearch').value = '';
+    document.getElementById('fInvoice').value = value;
+  } else {
+    document.getElementById('fInvoice').value = '';
+    document.getElementById('fSearch').value = value;
+  }
   filterAndRender();
   window.scrollTo({ top: document.querySelector('.filters-wrap').offsetTop - 70, behavior: 'smooth' });
 }
 
 function clearFilters() {
-  ['fSearch','fBrand','fOrigin','fStatus','fYear','fMonth'].forEach(id => document.getElementById(id).value = '');
+  ['fSearch','fBrand','fOrigin','fStatus','fYear','fMonth','fInvoice'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('fExact').checked = false;
   filterAndRender();
 }
@@ -747,12 +771,13 @@ function clearFilters() {
 function exportXLSX() {
   if (!filtered.length) { alert('No data available to export.'); return; }
 
-  const headers = ['Item ID','Catalog Nr.','ETA','Status','Origin','Qty','Brand','Month','Year','Total Cost (Transfer Price)'];
+  const headers = ['Item ID','Catalog Nr.','ETA','Status','Invoice Nr.','Origin','Qty','Brand','Month','Year','Total Cost (Transfer Price)'];
   const rows = filtered.map(r => ({
     'Item ID': r[0],
     'Catalog Nr.': r[1],
     'ETA': fmtDate(r[2]),
     'Status': r[3],
+    'Invoice Nr.': r[10] || '',
     'Origin': r[4],
     'Qty': r[5],
     'Brand': r[6],
@@ -763,7 +788,7 @@ function exportXLSX() {
 
   const ws = XLSX.utils.json_to_sheet(rows, { header: headers });
   ws['!cols'] = [
-    {wch:18},{wch:32},{wch:15},{wch:14},{wch:18},{wch:10},{wch:10},{wch:10},{wch:8},{wch:22}
+    {wch:18},{wch:32},{wch:15},{wch:14},{wch:20},{wch:18},{wch:10},{wch:10},{wch:10},{wch:8},{wch:22}
   ];
 
   const wb = XLSX.utils.book_new();
@@ -822,8 +847,8 @@ const chBrand = new Chart(document.getElementById('cBrand'), {
 
 function init() {
   buildOriginOptions();
-  document.querySelectorAll('thead th').forEach((th, i) => {
-    if (i === 2) {
+  document.querySelectorAll('thead th').forEach((th) => {
+    if (Number(th.dataset.col) === 2) {
       th.classList.add('sorted');
       const ic = th.querySelector('.si');
       if (ic) ic.textContent = '↑';
@@ -836,12 +861,16 @@ document.getElementById('fSearch').addEventListener('input', () => {
   clearTimeout(window._searchTimer);
   window._searchTimer = setTimeout(filterAndRender, 180);
 });
+document.getElementById('fInvoice').addEventListener('input', () => {
+  clearTimeout(window._invoiceTimer);
+  window._invoiceTimer = setTimeout(filterAndRender, 180);
+});
 ['fBrand','fOrigin','fStatus','fYear','fMonth'].forEach(id => document.getElementById(id).addEventListener('change', filterAndRender));
 
 async function loadData() {
   // Show loading overlay
   const tbody = document.getElementById('tbody');
-  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:48px 20px;color:var(--muted);font-size:13px">⏳ Loading data…</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:48px 20px;color:var(--muted);font-size:13px">⏳ Loading data…</td></tr>';
 
   try {
     const res = await fetch('https://raw.githubusercontent.com/FBRA-BrunoPrestes/portal-fbra/refs/heads/main/netlify/data/purchases.csv');
@@ -850,14 +879,14 @@ async function loadData() {
     RAW = parseCSV(text);
 
     if (!RAW.length) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:48px 20px;color:#c07800;font-size:13px">⚠️ CSV loaded but contains no data rows.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:48px 20px;color:#c07800;font-size:13px">⚠️ CSV loaded but contains no data rows.</td></tr>';
       return;
     }
     init();
 
   } catch (e) {
     tbody.innerHTML =
-      '<tr><td colspan="7" style="text-align:center;padding:48px 20px;color:#D32F2F;font-size:13px">' +
+      '<tr><td colspan="8" style="text-align:center;padding:48px 20px;color:#D32F2F;font-size:13px">' +
       '⚠️ Failed to load data: ' + e.message + '</td></tr>';
     console.error('Data load error:', e);
   }
@@ -884,11 +913,12 @@ function parseCSV(text) {
     brand:      header.findIndex(h => /^brand$/i.test(h)),
     month:      header.findIndex(h => /^month$/i.test(h)),
     year:       header.findIndex(h => /^year$/i.test(h)),
-    cost:       header.findIndex(h => /cost|price|total/i.test(h))
+    cost:       header.findIndex(h => /cost|price|total/i.test(h)),
+    invoice_nr: header.findIndex(h => /invoice/i.test(h))
   };
   // Fallback to positional if any column not found
   if (Object.values(col).some(v => v < 0)) {
-    Object.assign(col, {item_id:0,catalog_nr:1,eta:2,status:3,origin:4,qty:5,brand:6,month:7,year:8,cost:9});
+    Object.assign(col, {item_id:0,catalog_nr:1,eta:2,status:3,origin:4,qty:5,brand:6,month:7,year:8,cost:9,invoice_nr:10});
   }
 
   // English → Portuguese month mapping (to match dashboard filters)
@@ -924,6 +954,9 @@ function parseCSV(text) {
       .replace(',', '.');              // decimal comma → dot
     const cost = parseFloat(costStr) || 0;
 
+    // ── Invoice number (Column K) — empty for Backorder, present for Transit ──
+    const invoice = (cols[col.invoice_nr] || '').trim();
+
     rows.push([
       cols[col.item_id],
       cols[col.catalog_nr],
@@ -934,7 +967,8 @@ function parseCSV(text) {
       cols[col.brand],
       month,
       parseInt(cols[col.year], 10) || 0,
-      cost
+      cost,
+      invoice
     ]);
   }
   return rows;
