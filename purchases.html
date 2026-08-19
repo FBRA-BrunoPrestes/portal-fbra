@@ -516,7 +516,7 @@ function fmtCurrency(n) {
 function fmtDate(iso) {
   if (!iso) return '';
   const [y,m,d] = String(iso).split('-');
-  const month = new Date(Date.UTC(Number(y), Number(m)-1, Number(d))).toLocaleString('en-US', { month:'short' });
+  const month = new Date(Date.UTC(Number(y), Number(m)-1, Number(d))).toLocaleString('en-US', { month:'short', timeZone: 'UTC' });
   return `${month} ${String(Number(d)).padStart(2,'0')}, ${y}`;
 }
 function etaClass(eta) {
