@@ -61,7 +61,8 @@ async function callClaude(systemPrompt, messages, maxTokens) {
     throw new Error('API ' + response.status + ': ' + err);
   }
   const data = await response.json();
-  return data.content && data.content[0] ? data.content[0].text : '';
+  const textBlock = Array.isArray(data.content) ? data.content.find(b => b.type === 'text') : null;
+  return textBlock && typeof textBlock.text === 'string' ? textBlock.text : '';
 }
 
 // ── Step 1: extract intent and filters from the question ─────────────────────
@@ -80,12 +81,14 @@ Return ONLY a valid JSON object with these fields (all optional):
 }
 Only include fields that are clearly mentioned or implied. No explanation, only JSON.`;
 
-  // Use last 2 turns of history for context (keeps this call tiny)
+  // Use last 2 turns of history for context (keeps this call tiny).
+  // `history` already ends with the current user turn (the frontend pushes
+  // it before sending), so don't append `question` again — that produced
+  // two consecutive "user" messages, which the API rejects.
   const recentHistory = history.slice(-4);
-  const messages = [
-    ...recentHistory,
-    { role: 'user', content: question }
-  ];
+  const messages = recentHistory.length > 0
+    ? recentHistory
+    : [{ role: 'user', content: question }];
 
   try {
     const raw = await callClaude(systemPrompt, messages, 200);
