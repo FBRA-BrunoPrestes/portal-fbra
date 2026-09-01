@@ -82,6 +82,29 @@
   .legend-i { display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);font-weight:500; }
   .legend-d { width:8px;height:8px;border-radius:50%; }
 
+  /* STOCK / SALES BACKORDER / BALANCE SUMMARY */
+  .stock-summary-wrap { padding: 16px 32px 0; }
+  .stock-summary-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .stock-summary-eyebrow { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .stock-summary-item { font-size: 13px; font-weight: 700; color: var(--fersa-origin); }
+  html.dark .stock-summary-item { color: var(--fersa-electric); }
+  .stock-kpi-row { padding: 0; margin-bottom: 6px; }
+  .kpi.k-stock::before      { background: var(--fersa-origin); }
+  .kpi.k-salesback::before  { background: var(--backorder-color); }
+  .kpi.k-balance::before    { background: var(--fersa-power); }
+  .kpi.k-stock .kpi-val     { color: var(--fersa-origin); }
+  .kpi.k-salesback .kpi-val { color: var(--backorder-color); }
+  .kpi.k-balance .kpi-val   { color: #6b9c0e; }
+  .kpi.k-balance .kpi-val.negative { color: var(--backorder-color) !important; }
+  html.dark .kpi.k-stock .kpi-val { color: var(--fersa-electric); }
+  .stock-breakdown { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 2px 2px 4px; }
+  .stock-breakdown-lbl { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-right: 2px; }
+  .stock-breakdown-item { font-size: 11px; color: var(--muted); font-family: 'Inter', sans-serif; white-space: nowrap; }
+  .stock-breakdown-item b { color: var(--text); font-weight: 600; }
+  .stock-breakdown-empty { font-size: 11px; color: var(--muted); font-style: italic; }
+  .stock-breakdown-back .stock-breakdown-lbl { color: var(--backorder-color); }
+  .stock-summary-hint { margin: 16px 32px 0; padding: 12px 16px; background: var(--surface); border: 1px dashed var(--border); border-radius: 8px; font-size: 12px; color: var(--muted); text-align: center; }
+
   /* FILTERS */
   .filters-wrap { padding: 16px 32px 0; }
   .filters-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-start; }
@@ -281,6 +304,8 @@
   .topbar-sep { width: 1px; height: 20px; background: rgba(255,255,255,0.15); }
   .topbar-product { font-size: 12px; font-weight: 400; color: rgba(255,255,255,0.4); letter-spacing: 0.08em; text-transform: uppercase; }
   .topbar-right { display: flex; align-items: center; gap: 7px; }
+  .topbar-updated { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.5); letter-spacing: 0.02em; white-space: nowrap; }
+  .topbar-updated strong { color: rgba(255,255,255,0.8); font-weight: 600; }
   .topbar-flag { display: flex; align-items: center; gap: 7px; }
   .topbar-nav { display: flex; gap: 4px; margin: 0 auto; }
   .nav-btn {
@@ -328,10 +353,11 @@
 
     <nav class="topbar-nav">
       <a href="index.html" class="nav-btn">Home</a>
-      <a href="purchases.html" class="nav-btn active">Purchases</a>
+      <a href="purchases.html" class="nav-btn active">Requirements</a>
     </nav>
 
     <div class="topbar-right">
+      <span class="topbar-updated" id="topbarUpdated"></span>
       <div class="topbar-flag" title="Fersa Brasil">
         <img src="data:image/png;base64,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" alt="Brasil" style="display:block;width:36px;height:25px;border-radius:3px;opacity:0.85;" />
         <span style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.5);letter-spacing:0.06em;"></span>
@@ -460,6 +486,36 @@
   </div>
 </div>
 
+<div class="stock-summary-wrap" id="stockSummaryWrap" style="display:none">
+  <div class="stock-summary-head">
+    <span class="stock-summary-eyebrow">Requirements for</span>
+    <span class="stock-summary-item" id="stockSummaryItem"></span>
+  </div>
+  <div class="kpi-row stock-kpi-row">
+    <div class="kpi k-stock">
+      <div class="kpi-lbl">Stock</div>
+      <div class="kpi-val" id="sk1">0</div>
+      <div class="kpi-sub">total units in stock</div>
+      <div class="kpi-icon">🏭</div>
+    </div>
+    <div class="kpi k-salesback">
+      <div class="kpi-lbl">Sales Backorder</div>
+      <div class="kpi-val" id="sk2">0</div>
+      <div class="kpi-sub">pending sales orders</div>
+      <div class="kpi-icon">🛒</div>
+    </div>
+    <div class="kpi k-balance">
+      <div class="kpi-lbl">Balance</div>
+      <div class="kpi-val" id="sk3">0</div>
+      <div class="kpi-sub">stock − sales backorder</div>
+      <div class="kpi-icon">⚖️</div>
+    </div>
+  </div>
+  <div class="stock-breakdown" id="stockBreakdown"></div>
+  <div class="stock-breakdown stock-breakdown-back" id="salesBackorderBreakdown"></div>
+</div>
+<div class="stock-summary-hint" id="stockSummaryHint" style="display:none"></div>
+
 <div class="table-wrap">
   <table>
     <thead><tr>
@@ -489,9 +545,19 @@
 
 <script>
 let RAW = [];
+let STOCK = [];
+let SALES_BACKORDER = [];
 
 const TODAY = new Date("2026-05-14");
 TODAY.setHours(0,0,0,0);
+
+// ── DATA LAST UPDATE ────────────────────────────────────────────────
+// ⚠️ FROZEN DATE — this is NOT calculated automatically. Every time new
+// data (purchases.csv, stock.csv or sales_backorders.csv) is pushed to
+// git, update this constant by hand to the date the export was taken.
+const DATA_LAST_UPDATE = "2026-05-14";
+document.getElementById('topbarUpdated').innerHTML =
+  'Updated: <strong>' + fmtDate(DATA_LAST_UPDATE) + '</strong>';
 
 const MONTH_ORDER = {JAN:1,FEV:2,MAR:3,ABR:4,MAI:5,JUN:6,JUL:7,AGO:8,SET:9,OUT:10,NOV:11,DEZ:12};
 const MONTH_LABEL = {JAN:'Jan',FEV:'Feb',MAR:'Mar',ABR:'Apr',MAI:'May',JUN:'Jun',JUL:'Jul',AGO:'Aug',SET:'Sep',OUT:'Oct',NOV:'Nov',DEZ:'Dec'};
@@ -516,7 +582,7 @@ function fmtCurrency(n) {
 function fmtDate(iso) {
   if (!iso) return '';
   const [y,m,d] = String(iso).split('-');
-  const month = new Date(Date.UTC(Number(y), Number(m)-1, Number(d))).toLocaleString('en-US', { month:'short', timeZone: 'UTC' });
+  const month = new Date(Date.UTC(Number(y), Number(m)-1, Number(d))).toLocaleString('en-US', { month:'short' });
   return `${month} ${String(Number(d)).padStart(2,'0')}, ${y}`;
 }
 function etaClass(eta) {
@@ -721,7 +787,87 @@ function filterAndRender() {
   updateKPIs();
   updateCharts();
   updateResultCount();
+  updateStockSummary();
   renderTable();
+}
+
+// ── STOCK / SALES BACKORDER / BALANCE SUMMARY ───────────────────────
+// Shows a per-item requirements summary whenever the current filters
+// narrow the visible purchase rows down to a single Catalog Nr. + Brand
+// combination. Data comes from STOCK (by 14-digit Item ID) and
+// SALES_BACKORDER (aggregated by Catalog Nr. + Brand).
+function updateStockSummary() {
+  const wrap = document.getElementById('stockSummaryWrap');
+  const hint = document.getElementById('stockSummaryHint');
+
+  if (!filtered.length) {
+    wrap.style.display = 'none';
+    hint.style.display = 'block';
+    hint.textContent = 'No purchase records match your filters.';
+    return;
+  }
+
+  const catalogs = new Set(filtered.map(r => r[1]));
+  const brands   = new Set(filtered.map(r => r[6]));
+
+  if (catalogs.size !== 1 || brands.size !== 1) {
+    wrap.style.display = 'none';
+    hint.style.display = 'block';
+    hint.textContent = '📌 Filter by a single Catalog Nr. and Brand (e.g. click a row\'s Catalog Nr., or use search + the Brand filter) to see stock, sales backorder and balance for that item.';
+    return;
+  }
+
+  if (!STOCK.length && !SALES_BACKORDER.length) {
+    wrap.style.display = 'none';
+    hint.style.display = 'block';
+    hint.textContent = 'ℹ️ Stock and sales backorder data has not been published yet for this module.';
+    return;
+  }
+
+  const catalogNr = [...catalogs][0];
+  const brand     = [...brands][0];
+
+  const stockRows  = STOCK.filter(r => r[1] === catalogNr && r[2] === brand);
+  const stockTotal = stockRows.reduce((s,r) => s + Number(r[3] || 0), 0);
+
+  const backRows  = SALES_BACKORDER.filter(r => r[1] === catalogNr && r[2] === brand);
+  const backTotal = backRows.reduce((s,r) => s + Number(r[3] || 0), 0);
+
+  const balance = stockTotal - backTotal;
+
+  document.getElementById('stockSummaryItem').textContent = `${catalogNr} — ${brand}`;
+  document.getElementById('sk1').textContent = fmt(stockTotal);
+  document.getElementById('sk2').textContent = fmt(backTotal);
+  const balEl = document.getElementById('sk3');
+  balEl.textContent = fmt(balance);
+  balEl.classList.toggle('negative', balance < 0);
+
+  const breakdown = document.getElementById('stockBreakdown');
+  if (stockRows.length) {
+    breakdown.innerHTML = '<span class="stock-breakdown-lbl">Stock by code</span>' +
+      stockRows
+        .slice()
+        .sort((a,b) => Number(b[3] || 0) - Number(a[3] || 0))
+        .map(r => `<span class="stock-breakdown-item">${r[0]}: <b>${fmt(r[3])}</b></span>`)
+        .join('');
+  } else {
+    breakdown.innerHTML = '<span class="stock-breakdown-empty">No stock records found for this Catalog Nr. / Brand.</span>';
+  }
+
+  const backBreakdown = document.getElementById('salesBackorderBreakdown');
+  if (backRows.length) {
+    backBreakdown.innerHTML = '<span class="stock-breakdown-lbl">Sales backorder by code</span>' +
+      backRows
+        .slice()
+        .sort((a,b) => Number(b[3] || 0) - Number(a[3] || 0))
+        .map(r => `<span class="stock-breakdown-item">${r[0]}: <b>${fmt(r[3])}</b></span>`)
+        .join('');
+  } else {
+    backBreakdown.innerHTML = '<span class="stock-breakdown-empty">No sales backorder records found for this Catalog Nr. / Brand.</span>';
+  }
+
+  wrap.style.display = 'block';
+  hint.style.display = 'none';
 }
 
 function goPage(p) {
@@ -880,6 +1026,12 @@ async function loadData() {
       tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:48px 20px;color:#c07800;font-size:13px">⚠️ CSV loaded but contains no data rows.</td></tr>';
       return;
     }
+
+    // Stock & Sales Backorder are secondary datasets that power the
+    // Requirements summary cards. A failure here (e.g. files not yet
+    // published to git) must never block the main Purchases table.
+    await loadStockAndSalesData();
+
     init();
 
   } catch (e) {
@@ -888,6 +1040,75 @@ async function loadData() {
       '⚠️ Failed to load data: ' + e.message + '</td></tr>';
     console.error('Data load error:', e);
   }
+}
+
+async function loadStockAndSalesData() {
+  const STOCK_URL = 'https://raw.githubusercontent.com/FBRA-BrunoPrestes/portal-fbra/refs/heads/main/netlify/data/stock.csv';
+  const SALES_BACKORDER_URL = 'https://raw.githubusercontent.com/FBRA-BrunoPrestes/portal-fbra/refs/heads/main/netlify/data/sales_backorders.csv';
+
+  try {
+    const [stockRes, backRes] = await Promise.all([fetch(STOCK_URL), fetch(SALES_BACKORDER_URL)]);
+    STOCK           = stockRes.ok ? parseSimpleCSV(await stockRes.text(), ['item_id', 'catalog_nr', 'brand', 'qty']) : [];
+    SALES_BACKORDER = backRes.ok  ? parseSimpleCSV(await backRes.text(),  ['item_id', 'catalog_nr', 'brand', 'qty']) : [];
+    if (!stockRes.ok)  console.warn('stock.csv not available yet (HTTP ' + stockRes.status + ').');
+    if (!backRes.ok)   console.warn('sales_backorders.csv not available yet (HTTP ' + backRes.status + ').');
+  } catch (e) {
+    console.warn('Stock/Sales backorder data unavailable:', e.message);
+    STOCK = [];
+    SALES_BACKORDER = [];
+  }
+}
+
+// Generic, tolerant CSV parser for the simpler stock / sales-backorder
+// files. `fields` defines which logical columns to extract, in the
+// order they should end up in each output row. Header names are
+// matched flexibly (case-insensitive, partial), with a positional
+// fallback if a header can't be found.
+function parseSimpleCSV(text, fields) {
+  const FIELD_PATTERNS = {
+    item_id:    /item.?id/i,
+    catalog_nr: /catalog/i,
+    brand:      /^brand$/i,
+    qty:        /qty|quantity/i
+  };
+
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').filter(l => l.trim());
+  if (!lines.length) return [];
+
+  const delim  = lines[0].includes(';') ? ';' : ',';
+  const header = lines[0].split(delim).map(h => h.replace(/^"|"$/g, '').trim().toLowerCase());
+
+  const col = {};
+  fields.forEach(f => { col[f] = header.findIndex(h => FIELD_PATTERNS[f].test(h)); });
+  if (Object.values(col).some(v => v < 0)) {
+    // Fallback: assume columns are in the same order as `fields`
+    fields.forEach((f, i) => { col[f] = i; });
+  }
+
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = splitLine(lines[i].trim(), delim);
+    if (cols.length < fields.length) continue;
+    rows.push(fields.map(f => {
+      const raw = (cols[col[f]] || '').trim();
+      return f === 'qty' ? parseQtyStr(raw) : raw;
+    }));
+  }
+  return rows;
+}
+
+// Accepts plain integers ("1200"), thousands-comma ("1,200") and
+// European thousands-dot/decimal-comma ("1.200,00") formats.
+function parseQtyStr(raw) {
+  if (raw == null) return 0;
+  let s = String(raw).trim();
+  if (!s) return 0;
+  if (/,\d{1,3}$/.test(s) && s.includes('.')) {
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else {
+    s = s.replace(/,/g, '');
+  }
+  return Math.round(parseFloat(s) || 0);
 }
 
 function parseCSV(text) {
