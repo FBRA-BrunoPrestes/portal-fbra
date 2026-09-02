@@ -510,6 +510,12 @@
       <div class="kpi-sub">stock − sales backorder</div>
       <div class="kpi-icon">⚖️</div>
     </div>
+    <div class="kpi k-transit">
+      <div class="kpi-lbl">In Transit</div>
+      <div class="kpi-val" id="sk4">0</div>
+      <div class="kpi-sub">purchase units in transit</div>
+      <div class="kpi-icon">🚢</div>
+    </div>
   </div>
   <div class="stock-breakdown" id="stockBreakdown"></div>
   <div class="stock-breakdown stock-breakdown-back" id="salesBackorderBreakdown"></div>
@@ -835,12 +841,17 @@ function updateStockSummary() {
 
   const balance = stockTotal - backTotal;
 
+  const transitTotal = filtered
+    .filter(r => r[3] === 'Transit')
+    .reduce((s,r) => s + Number(r[5] || 0), 0);
+
   document.getElementById('stockSummaryItem').textContent = `${catalogNr} — ${brand}`;
   document.getElementById('sk1').textContent = fmt(stockTotal);
   document.getElementById('sk2').textContent = fmt(backTotal);
   const balEl = document.getElementById('sk3');
   balEl.textContent = fmt(balance);
   balEl.classList.toggle('negative', balance < 0);
+  document.getElementById('sk4').textContent = fmt(transitTotal);
 
   const breakdown = document.getElementById('stockBreakdown');
   if (stockRows.length) {
