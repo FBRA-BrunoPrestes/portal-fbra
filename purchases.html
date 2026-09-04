@@ -587,7 +587,7 @@ const TODAY = isoToUTCDate("2026-05-14");
 // ⚠️ FROZEN DATE — this is NOT calculated automatically. Every time new
 // data (purchases.csv, stock.csv or sales_backorders.csv) is pushed to
 // git, update this constant by hand to the date the export was taken.
-const DATA_LAST_UPDATE = "2026-09-04";
+const DATA_LAST_UPDATE = "2026-09-02";
 document.getElementById('topbarUpdated').innerHTML =
   'Updated: <strong>' + fmtDate(DATA_LAST_UPDATE) + '</strong>';
 
@@ -835,20 +835,19 @@ function updateStockSummary() {
   const wrap = document.getElementById('stockSummaryWrap');
   const hint = document.getElementById('stockSummaryHint');
 
-  if (!filtered.length) {
+  // Resolve which single Catalog Nr. + Brand to summarise. Purchases
+  // (arrivals/transit) are preferred, but an item can have stock and/or
+  // sales backorder WITHOUT any arrivals — in that case the target is
+  // resolved from STOCK / SALES_BACKORDER using the current search + brand
+  // filter, so the cards still show for it (transit will simply be 0).
+  const target = resolveStockTarget();
+
+  if (!target) {
     wrap.style.display = 'none';
     hint.style.display = 'block';
-    hint.textContent = 'No purchase records match your filters.';
-    return;
-  }
-
-  const catalogs = new Set(filtered.map(r => r[1]));
-  const brands   = new Set(filtered.map(r => r[6]));
-
-  if (catalogs.size !== 1 || brands.size !== 1) {
-    wrap.style.display = 'none';
-    hint.style.display = 'block';
-    hint.textContent = '📌 Filter by a single Catalog Nr. and Brand (e.g. click a row\'s Catalog Nr., or use search + the Brand filter) to see stock, sales backorder and balance for that item.';
+    hint.textContent = (!filtered.length && !anyStockMatch())
+      ? 'No records match your filters.'
+      : '📌 Filter by a single Catalog Nr. and Brand (e.g. click a row\'s Catalog Nr., or use search + the Brand filter) to see stock, sales backorder and balance for that item.';
     return;
   }
 
@@ -859,8 +858,8 @@ function updateStockSummary() {
     return;
   }
 
-  const catalogNr = [...catalogs][0];
-  const brand     = [...brands][0];
+  const catalogNr = target.catalogNr;
+  const brand     = target.brand;
 
   const stockRows  = STOCK.filter(r => r[1] === catalogNr && r[2] === brand);
   const stockTotal = stockRows.reduce((s,r) => s + Number(r[3] || 0), 0);
@@ -908,6 +907,64 @@ function updateStockSummary() {
 
   wrap.style.display = 'block';
   hint.style.display = 'none';
+}
+
+// Build a predicate that matches STOCK / SALES_BACKORDER rows against the
+// current search query + brand filter. Row shape: [item_id, catalog_nr,
+// brand, qty]. Returns null when there's nothing to match on.
+function buildStockMatcher() {
+  const q     = document.getElementById('fSearch').value.toLowerCase().trim();
+  const exact = document.getElementById('fExact').checked;
+  const br    = document.getElementById('fBrand').value;
+  if (!q && !br) return null;
+  return (r) => {
+    const id  = String(r[0]).toLowerCase();
+    const cat = String(r[1]).toLowerCase();
+    if (q) {
+      const ok = exact ? (id === q || cat === q) : (id.includes(q) || cat.includes(q));
+      if (!ok) return false;
+    }
+    if (br && r[2] !== br) return false;
+    return true;
+  };
+}
+
+// Whether the current search / brand filter hits any stock or backorder
+// row at all (used to choose the right empty-state message).
+function anyStockMatch() {
+  const match = buildStockMatcher();
+  if (!match) return false;
+  return STOCK.some(match) || SALES_BACKORDER.some(match);
+}
+
+// Resolve the single Catalog Nr. + Brand to summarise, or null when it
+// can't be pinned down to exactly one item.
+function resolveStockTarget() {
+  // 1) Prefer purchases when they already narrow the view to one item.
+  if (filtered.length) {
+    const cats = new Set(filtered.map(r => r[1]));
+    const brs  = new Set(filtered.map(r => r[6]));
+    if (cats.size === 1 && brs.size === 1) {
+      return { catalogNr: [...cats][0], brand: [...brs][0] };
+    }
+    return null; // several items in view → caller shows the hint
+  }
+
+  // 2) No purchase rows matched (e.g. an item with stock but no arrivals).
+  //    Resolve the target from STOCK / SALES_BACKORDER using the same
+  //    search query + brand filter so its cards still show.
+  const match = buildStockMatcher();
+  if (!match) return null;
+
+  const pool = [...STOCK.filter(match), ...SALES_BACKORDER.filter(match)];
+  if (!pool.length) return null;
+
+  const cats = new Set(pool.map(r => r[1]));
+  const brs  = new Set(pool.map(r => r[2]));
+  if (cats.size === 1 && brs.size === 1) {
+    return { catalogNr: [...cats][0], brand: [...brs][0] };
+  }
+  return null; // ambiguous → caller shows the hint
 }
 
 function goPage(p) {
