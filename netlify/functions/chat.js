@@ -12,13 +12,38 @@ const CSV_SOURCES = {
   purchases: 'https://raw.githubusercontent.com/FBRA-BrunoPrestes/portal-fbra/refs/heads/main/netlify/data/purchases.csv',
   summary:   'https://raw.githubusercontent.com/FBRA-BrunoPrestes/portal-fbra/refs/heads/main/netlify/data/summary.csv',
   sales_fill_rate: 'https://raw.githubusercontent.com/FBRA-BrunoPrestes/portal-fbra/refs/heads/main/netlify/data/sales_fill_rate.csv',
+  stock:     'https://raw.githubusercontent.com/FBRA-BrunoPrestes/portal-fbra/refs/heads/main/netlify/data/stock.csv',
+  sales_backorders: 'https://raw.githubusercontent.com/FBRA-BrunoPrestes/portal-fbra/refs/heads/main/netlify/data/sales_backorders.csv',
 };
+
+// Different exports use different header spellings for the same concept
+// (e.g. "Catalog Nr." vs "catalog_nr", "Item ID" vs "item_id"). Normalise
+// the key columns to canonical snake_case so filtering works uniformly
+// across every dataset. Unmapped columns are kept untouched.
+const HEADER_ALIASES = {
+  'item id': 'item_id',
+  'item_id': 'item_id',
+  'catalog nr.': 'catalog_nr',
+  'catalog nr': 'catalog_nr',
+  'catalog': 'catalog_nr',
+  'catalog_nr': 'catalog_nr',
+  'brand': 'brand',
+  'qty': 'qty',
+  'quantity': 'qty',
+  'status': 'status',
+  'origin': 'origin',
+  'month': 'month',
+};
+function canonicalHeader(h) {
+  return HEADER_ALIASES[String(h).trim().toLowerCase()] || String(h).trim();
+}
 
 // ── CSV parser ────────────────────────────────────────────────────────────────
 function parseCSV(text) {
   const lines = text.trim().split('\n').filter(Boolean);
   if (lines.length < 2) return { headers: [], rows: [] };
-  const headers = lines[0].split(';').map(h => h.trim());
+  // Map raw headers → canonical keys (key columns) while preserving others.
+  const headers = lines[0].split(';').map(h => canonicalHeader(h));
   const rows = lines.slice(1).map(line => {
     const values = line.split(';').map(v => v.trim());
     const row = {};
@@ -70,7 +95,7 @@ async function extractFilters(question, history) {
   const systemPrompt = `You extract search filters from a user question about a purchases/stock portal.
 Return ONLY a valid JSON object with these fields (all optional):
 {
-  "datasets": ["purchases", "summary", "sales_fill_rate"],  // which datasets are needed
+  "datasets": ["purchases", "stock", "sales_backorders", "summary", "sales_fill_rate"],  // which datasets are needed
   "catalog_nr": "partial product name or reference to search for",
   "brand": "FERSA or NKE or PFI or A&S",
   "status": "Transit or Backorder",
@@ -79,6 +104,15 @@ Return ONLY a valid JSON object with these fields (all optional):
   "is_total": true,   // true if user wants an overall total (no specific product)
   "is_summary": true  // true if question is about revenue/budget/sales forecast
 }
+
+Dataset guide (pick every dataset the question needs):
+- "stock": on-hand inventory / current stock ("quanto temos em estoque", "stock on hand", "peças em estoque"). Stock lives ONLY here, never in purchases.
+- "purchases": incoming arrivals / transit / purchase backorder (ETA, invoices, in transit, chegadas).
+- "sales_backorders": open sales backorder (customer demand not yet served).
+- "summary": revenue vs budget / sales forecast.
+- "sales_fill_rate": intake vs on-time delivery / fill rate.
+A stock question about a specific product (e.g. "quantas peças em estoque do PF110390") → datasets ["stock"] with catalog_nr "PF110390". If it also asks about arrivals or balance, add "purchases" and/or "sales_backorders".
+
 Only include fields that are clearly mentioned or implied. No explanation, only JSON.`;
 
   // Use last 2 turns of history for context (keeps this call tiny).
@@ -122,6 +156,45 @@ function filterRows(rows, filters) {
     }
     return true;
   });
+}
+
+// Stock and sales-backorder files only carry item_id / catalog_nr / brand /
+// qty, so only those filters apply. Applying status/origin/month here (which
+// don't exist in these files) would wrongly drop every row.
+function filterStockRows(rows, filters) {
+  return rows.filter(row => {
+    if (filters.catalog_nr) {
+      const search = filters.catalog_nr.toLowerCase();
+      const cat = (row['catalog_nr'] || '').toLowerCase();
+      const id  = (row['item_id'] || '').toLowerCase();
+      if (!cat.includes(search) && !id.includes(search)) return false;
+    }
+    if (filters.brand) {
+      if ((row['brand'] || '').toUpperCase() !== filters.brand.toUpperCase()) return false;
+    }
+    return true;
+  });
+}
+
+// Summarise a stock / backorder dataset for the answer prompt: total qty,
+// plus per-code rows when a specific product was requested (few rows), or a
+// per-brand breakdown for overall queries (avoids dumping thousands of rows).
+function stockBlock(label, headers, rows, filters) {
+  const filtered = filterStockRows(rows, filters);
+  if (filtered.length === 0) return label + ': no matching rows found.';
+  const totalQty = filtered.reduce((s, r) => s + (parseInt(r['qty']) || 0), 0);
+  if (filters.catalog_nr && filtered.length <= 60) {
+    return label + ' — total qty ' + totalQty + ' across ' + filtered.length +
+      ' code(s):\n' + rowsToText(headers, filtered, 'Rows');
+  }
+  const byBrand = {};
+  filtered.forEach(r => {
+    const b = r['brand'] || '—';
+    byBrand[b] = (byBrand[b] || 0) + (parseInt(r['qty']) || 0);
+  });
+  const brandLines = Object.entries(byBrand).map(([b, q]) => '  ' + b + ': ' + q).join('\n');
+  return label + ' — total qty ' + totalQty + ' across ' + filtered.length +
+    ' code(s)\nBy brand:\n' + brandLines;
 }
 
 // ── Format filtered rows as compact CSV text ──────────────────────────────────
@@ -169,6 +242,20 @@ exports.handler = async function (event) {
         } else {
           dataParts.push(rowsToText(headers, filtered, '## Purchases'));
         }
+      }
+    }
+
+    if (needed.includes('stock')) {
+      const { headers, rows } = await fetchCSV('stock');
+      if (rows.length > 0) {
+        dataParts.push(stockBlock('## Stock on hand', headers, rows, filters));
+      }
+    }
+
+    if (needed.includes('sales_backorders')) {
+      const { headers, rows } = await fetchCSV('sales_backorders');
+      if (rows.length > 0) {
+        dataParts.push(stockBlock('## Sales backorder (open customer demand)', headers, rows, filters));
       }
     }
 
