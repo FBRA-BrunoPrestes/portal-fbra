@@ -554,8 +554,34 @@ let RAW = [];
 let STOCK = [];
 let SALES_BACKORDER = [];
 
-const TODAY = new Date("2026-05-14");
-TODAY.setHours(0,0,0,0);
+// ── DATE HELPERS (timezone-safe) ────────────────────────────────────
+// ETAs are plain calendar dates, not instants. The browser's local
+// timezone must NEVER touch them, otherwise an ISO date at UTC-midnight
+// (e.g. 2026-10-01) rolls back a day in UTC-negative zones like Brazil
+// (UTC−3) and an October ETA renders as 30/Sep. All calendar-date math
+// below is anchored to UTC so the displayed day is always the real day.
+function toISO(value) {
+  // Normalise any accepted ETA to ISO YYYY-MM-DD.
+  // Accepts "DD/MM/YYYY", "D/M/YYYY" and passes ISO through unchanged.
+  const s = String(value == null ? '' : value).trim();
+  if (!s) return '';
+  if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(s)) {
+    const [y, m, d] = s.split('-');
+    return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+  }
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);   // DD/MM/YYYY
+  if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  return s;   // unknown format → leave as-is (fmtDate will guard it)
+}
+function isoToUTCDate(value) {
+  // Build a UTC-midnight Date from a calendar date, timezone-proof.
+  const iso = toISO(value);
+  const [y, m, d] = iso.split('-').map(Number);
+  if (!y || !m || !d) return null;
+  return new Date(Date.UTC(y, m - 1, d));
+}
+
+const TODAY = isoToUTCDate("2026-05-14");
 
 // ── DATA LAST UPDATE ────────────────────────────────────────────────
 // ⚠️ FROZEN DATE — this is NOT calculated automatically. Every time new
@@ -585,14 +611,17 @@ function fmtCurrency(n) {
   const num = Number(n) || 0;
   return '€ ' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
-function fmtDate(iso) {
-  if (!iso) return '';
-  const [y,m,d] = String(iso).split('-');
-  const month = new Date(Date.UTC(Number(y), Number(m)-1, Number(d))).toLocaleString('en-US', { month:'short' });
-  return `${month} ${String(Number(d)).padStart(2,'0')}, ${y}`;
+function fmtDate(value) {
+  if (!value) return '';
+  const [y,m,d] = toISO(value).split('-').map(Number);
+  if (!y || !m || !d) return '';
+  const month = new Date(Date.UTC(y, m-1, d)).toLocaleString('en-US', { month:'short', timeZone:'UTC' });
+  return `${month} ${String(d).padStart(2,'0')}, ${y}`;
 }
 function etaClass(eta) {
-  const diff = (new Date(eta) - TODAY) / 86400000;
+  const d = isoToUTCDate(eta);
+  if (!d) return 'far';
+  const diff = (d - TODAY) / 86400000;
   return diff <= 45 ? 'soon' : diff <= 120 ? 'medium' : 'far';
 }
 function bpClass(b) { return b === 'A&S' ? 'AS' : b; }
@@ -1146,9 +1175,12 @@ function parseCSV(text) {
     cost:       header.findIndex(h => /cost|price|total/i.test(h)),
     invoice_nr: header.findIndex(h => /invoice/i.test(h))
   };
-  // Fallback to positional if any column not found
+  // Fallback to positional if any column not found.
+  // Mirrors the CURRENT purchases.csv layout:
+  // invoice_nr;item_id;catalog_nr;etd;eta;status;origin;month;year;brand;qty;total_cost
+  // (index 3 is etd — estimated departure — and is intentionally skipped)
   if (Object.values(col).some(v => v < 0)) {
-    Object.assign(col, {item_id:0,catalog_nr:1,eta:2,status:3,origin:4,qty:5,brand:6,month:7,year:8,cost:9,invoice_nr:10});
+    Object.assign(col, {invoice_nr:0,item_id:1,catalog_nr:2,eta:4,status:5,origin:6,month:7,year:8,brand:9,qty:10,cost:11});
   }
 
   // English → Portuguese month mapping (to match dashboard filters)
@@ -1163,12 +1195,10 @@ function parseCSV(text) {
     const cols = splitLine(line, delim);
     if (cols.length < 10) continue;
 
-    // ── ETA: convert DD/MM/YYYY → YYYY-MM-DD ──────────────────────────
-    let eta = cols[col.eta];
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(eta)) {
-      const [d, m, y] = eta.split('/');
-      eta = `${y}-${m}-${d}`;
-    }
+    // ── ETA: normalise to ISO YYYY-MM-DD (timezone-safe) ──────────────
+    // Accepts DD/MM/YYYY, D/M/YYYY or already-ISO. Stored as ISO so the
+    // display layer never depends on the browser's local timezone.
+    let eta = toISO(cols[col.eta]);
 
     // ── Month: map English → Portuguese abbreviation ───────────────────
     const rawMonth = cols[col.month].toUpperCase();
