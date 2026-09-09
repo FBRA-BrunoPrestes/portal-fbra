@@ -304,8 +304,8 @@
   .topbar-sep { width: 1px; height: 20px; background: rgba(255,255,255,0.15); }
   .topbar-product { font-size: 12px; font-weight: 400; color: rgba(255,255,255,0.4); letter-spacing: 0.08em; text-transform: uppercase; }
   .topbar-right { display: flex; align-items: center; gap: 7px; }
-  .topbar-d { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.5); letter-spacing: 0.02em; white-space: nowrap; }
-  .topbar-d strong { color: rgba(255,255,255,0.8); font-weight: 600; }
+  .topbar-updated { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.5); letter-spacing: 0.02em; white-space: nowrap; }
+  .topbar-updated strong { color: rgba(255,255,255,0.8); font-weight: 600; }
   .topbar-flag { display: flex; align-items: center; gap: 7px; }
   .topbar-nav { display: flex; gap: 4px; margin: 0 auto; }
   .nav-btn {
@@ -357,7 +357,7 @@
     </nav>
 
     <div class="topbar-right">
-      <span class="topbar-d" id="topbard"></span>
+      <span class="topbar-updated" id="topbarUpdated"></span>
       <div class="topbar-flag" title="Fersa Brasil">
         <img src="data:image/png;base64,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" alt="Brasil" style="display:block;width:36px;height:25px;border-radius:3px;opacity:0.85;" />
         <span style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.5);letter-spacing:0.06em;"></span>
@@ -554,40 +554,14 @@ let RAW = [];
 let STOCK = [];
 let SALES_BACKORDER = [];
 
-// ── DATE HELPERS (timezone-safe) ────────────────────────────────────
-// ETAs are plain calendar dates, not instants. The browser's local
-// timezone must NEVER touch them, otherwise an ISO date at UTC-midnight
-// (e.g. 2026-10-01) rolls back a day in UTC-negative zones like Brazil
-// (UTC−3) and an October ETA renders as 30/Sep. All calendar-date math
-// below is anchored to UTC so the displayed day is always the real day.
-function toISO(value) {
-  // Normalise any accepted ETA to ISO YYYY-MM-DD.
-  // Accepts "DD/MM/YYYY", "D/M/YYYY" and passes ISO through unchanged.
-  const s = String(value == null ? '' : value).trim();
-  if (!s) return '';
-  if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(s)) {
-    const [y, m, d] = s.split('-');
-    return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
-  }
-  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);   // DD/MM/YYYY
-  if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
-  return s;   // unknown format → leave as-is (fmtDate will guard it)
-}
-function isoToUTCDate(value) {
-  // Build a UTC-midnight Date from a calendar date, timezone-proof.
-  const iso = toISO(value);
-  const [y, m, d] = iso.split('-').map(Number);
-  if (!y || !m || !d) return null;
-  return new Date(Date.UTC(y, m - 1, d));
-}
+const TODAY = new Date("2026-05-14");
+TODAY.setHours(0,0,0,0);
 
-const TODAY = isoToUTCDate("2026-05-14");
-
-// ── DATA LAST  ────────────────────────────────────────────────
+// ── DATA LAST UPDATE ────────────────────────────────────────────────
 // ⚠️ FROZEN DATE — this is NOT calculated automatically. Every time new
 // data (purchases.csv, stock.csv or sales_backorders.csv) is pushed to
-// git,  this constant by hand to the date the export was taken.
-const DATA_LAST_UPDATE = "2026-09-09";
+// git, update this constant by hand to the date the export was taken.
+const DATA_LAST_UPDATE = "2026-05-14";
 document.getElementById('topbarUpdated').innerHTML =
   'Updated: <strong>' + fmtDate(DATA_LAST_UPDATE) + '</strong>';
 
@@ -611,17 +585,14 @@ function fmtCurrency(n) {
   const num = Number(n) || 0;
   return '€ ' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
-function fmtDate(value) {
-  if (!value) return '';
-  const [y,m,d] = toISO(value).split('-').map(Number);
-  if (!y || !m || !d) return '';
-  const month = new Date(Date.UTC(y, m-1, d)).toLocaleString('en-US', { month:'short', timeZone:'UTC' });
-  return `${month} ${String(d).padStart(2,'0')}, ${y}`;
+function fmtDate(iso) {
+  if (!iso) return '';
+  const [y,m,d] = String(iso).split('-');
+  const month = new Date(Date.UTC(Number(y), Number(m)-1, Number(d))).toLocaleString('en-US', { month:'short' });
+  return `${month} ${String(Number(d)).padStart(2,'0')}, ${y}`;
 }
 function etaClass(eta) {
-  const d = isoToUTCDate(eta);
-  if (!d) return 'far';
-  const diff = (d - TODAY) / 86400000;
+  const diff = (new Date(eta) - TODAY) / 86400000;
   return diff <= 45 ? 'soon' : diff <= 120 ? 'medium' : 'far';
 }
 function bpClass(b) { return b === 'A&S' ? 'AS' : b; }
@@ -735,6 +706,8 @@ function prettyMonth(monthCode, year) {
 }
 
 function updateCharts() {
+  if (!chMonthly || !chBrand) return; // Chart.js unavailable — skip silently
+
   const mData = {};
   filtered.forEach(r => {
     const k = `${r[7]}/${r[8]}`;
@@ -835,19 +808,20 @@ function updateStockSummary() {
   const wrap = document.getElementById('stockSummaryWrap');
   const hint = document.getElementById('stockSummaryHint');
 
-  // Resolve which single Catalog Nr. + Brand to summarise. Purchases
-  // (arrivals/transit) are preferred, but an item can have stock and/or
-  // sales backorder WITHOUT any arrivals — in that case the target is
-  // resolved from STOCK / SALES_BACKORDER using the current search + brand
-  // filter, so the cards still show for it (transit will simply be 0).
-  const target = resolveStockTarget();
-
-  if (!target) {
+  if (!filtered.length) {
     wrap.style.display = 'none';
     hint.style.display = 'block';
-    hint.textContent = (!filtered.length && !anyStockMatch())
-      ? 'No records match your filters.'
-      : '📌 Filter by a single Catalog Nr. and Brand (e.g. click a row\'s Catalog Nr., or use search + the Brand filter) to see stock, sales backorder and balance for that item.';
+    hint.textContent = 'No purchase records match your filters.';
+    return;
+  }
+
+  const catalogs = new Set(filtered.map(r => r[1]));
+  const brands   = new Set(filtered.map(r => r[6]));
+
+  if (catalogs.size !== 1 || brands.size !== 1) {
+    wrap.style.display = 'none';
+    hint.style.display = 'block';
+    hint.textContent = '📌 Filter by a single Catalog Nr. and Brand (e.g. click a row\'s Catalog Nr., or use search + the Brand filter) to see stock, sales backorder and balance for that item.';
     return;
   }
 
@@ -858,8 +832,8 @@ function updateStockSummary() {
     return;
   }
 
-  const catalogNr = target.catalogNr;
-  const brand     = target.brand;
+  const catalogNr = [...catalogs][0];
+  const brand     = [...brands][0];
 
   const stockRows  = STOCK.filter(r => r[1] === catalogNr && r[2] === brand);
   const stockTotal = stockRows.reduce((s,r) => s + Number(r[3] || 0), 0);
@@ -909,64 +883,6 @@ function updateStockSummary() {
   hint.style.display = 'none';
 }
 
-// Build a predicate that matches STOCK / SALES_BACKORDER rows against the
-// current search query + brand filter. Row shape: [item_id, catalog_nr,
-// brand, qty]. Returns null when there's nothing to match on.
-function buildStockMatcher() {
-  const q     = document.getElementById('fSearch').value.toLowerCase().trim();
-  const exact = document.getElementById('fExact').checked;
-  const br    = document.getElementById('fBrand').value;
-  if (!q && !br) return null;
-  return (r) => {
-    const id  = String(r[0]).toLowerCase();
-    const cat = String(r[1]).toLowerCase();
-    if (q) {
-      const ok = exact ? (id === q || cat === q) : (id.includes(q) || cat.includes(q));
-      if (!ok) return false;
-    }
-    if (br && r[2] !== br) return false;
-    return true;
-  };
-}
-
-// Whether the current search / brand filter hits any stock or backorder
-// row at all (used to choose the right empty-state message).
-function anyStockMatch() {
-  const match = buildStockMatcher();
-  if (!match) return false;
-  return STOCK.some(match) || SALES_BACKORDER.some(match);
-}
-
-// Resolve the single Catalog Nr. + Brand to summarise, or null when it
-// can't be pinned down to exactly one item.
-function resolveStockTarget() {
-  // 1) Prefer purchases when they already narrow the view to one item.
-  if (filtered.length) {
-    const cats = new Set(filtered.map(r => r[1]));
-    const brs  = new Set(filtered.map(r => r[6]));
-    if (cats.size === 1 && brs.size === 1) {
-      return { catalogNr: [...cats][0], brand: [...brs][0] };
-    }
-    return null; // several items in view → caller shows the hint
-  }
-
-  // 2) No purchase rows matched (e.g. an item with stock but no arrivals).
-  //    Resolve the target from STOCK / SALES_BACKORDER using the same
-  //    search query + brand filter so its cards still show.
-  const match = buildStockMatcher();
-  if (!match) return null;
-
-  const pool = [...STOCK.filter(match), ...SALES_BACKORDER.filter(match)];
-  if (!pool.length) return null;
-
-  const cats = new Set(pool.map(r => r[1]));
-  const brs  = new Set(pool.map(r => r[2]));
-  if (cats.size === 1 && brs.size === 1) {
-    return { catalogNr: [...cats][0], brand: [...brs][0] };
-  }
-  return null; // ambiguous → caller shows the hint
-}
-
 function goPage(p) {
   page = p;
   renderTable();
@@ -1011,6 +927,10 @@ function clearFilters() {
 
 function exportXLSX() {
   if (!filtered.length) { alert('No data available to export.'); return; }
+  if (typeof XLSX === 'undefined') {
+    alert('Export is temporarily unavailable (the Excel library failed to load). Please refresh the page and try again.');
+    return;
+  }
 
   const headers = ['Item ID','Catalog Nr.','ETA','Status','Invoice Nr.','Origin','Qty','Brand','Month','Year','Total Cost (Transfer Price)'];
   const rows = filtered.map(r => ({
@@ -1051,40 +971,50 @@ const tooltipCfg = {
   cornerRadius: 6
 };
 
-const chMonthly = new Chart(document.getElementById('cMonthly'), {
-  type:'bar',
-  data:{ labels:[], datasets:[{ data:[], backgroundColor:[], borderRadius:3, borderSkipped:false }] },
-  options:{
-    responsive:true,
-    maintainAspectRatio:false,
-    plugins:{
-      legend:{ display:false },
-      tooltip: {
-        ...tooltipCfg,
-        callbacks: {
-          label: c => chartMode === 'cost' ? ' ' + fmtCurrency(c.raw) : ' ' + fmt(c.raw) + ' units'
-        }
-      }
-    },
-    scales:{
-      x:{ ticks:{ color:'#85959C', font:{ size:10 } }, grid:{ color:'rgba(0,0,0,.05)' }, border:{ color:'rgba(0,0,0,.08)' } },
-      y:{ ticks:{ color:'#85959C', font:{ size:10 }, callback:v => chartMode === 'cost' ? '€' + fmt(Math.round(v)) : fmt(v) }, grid:{ color:'rgba(0,0,0,.05)' }, border:{ color:'rgba(0,0,0,.08)' } }
-    }
-  }
-});
+let chMonthly = null;
+let chBrand = null;
 
-const chBrand = new Chart(document.getElementById('cBrand'), {
-  type:'doughnut',
-  data:{ labels: BRANDS, datasets:[{ data:[0,0,0,0], backgroundColor: BRANDS.map(b => BRAND_COL[b]), borderWidth:0, hoverOffset:8 }] },
-  options:{
-    responsive:true,
-    maintainAspectRatio:false,
-    plugins:{
-      legend:{ position:'bottom', labels:{ color:'#465055', font:{ size:11 }, padding:10, boxWidth:10, usePointStyle:true } },
-      tooltip:{ ...tooltipCfg, callbacks:{ label:c => ' ' + c.label + ': ' + (chartMode === 'cost' ? fmtCurrency(c.raw) : fmt(c.raw) + ' units') } }
+try {
+  chMonthly = new Chart(document.getElementById('cMonthly'), {
+    type:'bar',
+    data:{ labels:[], datasets:[{ data:[], backgroundColor:[], borderRadius:3, borderSkipped:false }] },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{ display:false },
+        tooltip: {
+          ...tooltipCfg,
+          callbacks: {
+            label: c => chartMode === 'cost' ? ' ' + fmtCurrency(c.raw) : ' ' + fmt(c.raw) + ' units'
+          }
+        }
+      },
+      scales:{
+        x:{ ticks:{ color:'#85959C', font:{ size:10 } }, grid:{ color:'rgba(0,0,0,.05)' }, border:{ color:'rgba(0,0,0,.08)' } },
+        y:{ ticks:{ color:'#85959C', font:{ size:10 }, callback:v => chartMode === 'cost' ? '€' + fmt(Math.round(v)) : fmt(v) }, grid:{ color:'rgba(0,0,0,.05)' }, border:{ color:'rgba(0,0,0,.08)' } }
+      }
     }
-  }
-});
+  });
+
+  chBrand = new Chart(document.getElementById('cBrand'), {
+    type:'doughnut',
+    data:{ labels: BRANDS, datasets:[{ data:[0,0,0,0], backgroundColor: BRANDS.map(b => BRAND_COL[b]), borderWidth:0, hoverOffset:8 }] },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{ position:'bottom', labels:{ color:'#465055', font:{ size:11 }, padding:10, boxWidth:10, usePointStyle:true } },
+        tooltip:{ ...tooltipCfg, callbacks:{ label:c => ' ' + c.label + ': ' + (chartMode === 'cost' ? fmtCurrency(c.raw) : fmt(c.raw) + ' units') } }
+      }
+    }
+  });
+} catch (e) {
+  // Chart.js failed to load (CDN blocked/slow/offline). Charts stay
+  // blank, but this must NEVER prevent KPIs, the table, or the
+  // Requirements summary cards below from working.
+  console.warn('Chart.js unavailable — charts disabled, rest of the page continues normally:', e.message);
+}
 
 function init() {
   buildOriginOptions();
@@ -1232,12 +1162,9 @@ function parseCSV(text) {
     cost:       header.findIndex(h => /cost|price|total/i.test(h)),
     invoice_nr: header.findIndex(h => /invoice/i.test(h))
   };
-  // Fallback to positional if any column not found.
-  // Mirrors the CURRENT purchases.csv layout:
-  // invoice_nr;item_id;catalog_nr;etd;eta;status;origin;month;year;brand;qty;total_cost
-  // (index 3 is etd — estimated departure — and is intentionally skipped)
+  // Fallback to positional if any column not found
   if (Object.values(col).some(v => v < 0)) {
-    Object.assign(col, {invoice_nr:0,item_id:1,catalog_nr:2,eta:4,status:5,origin:6,month:7,year:8,brand:9,qty:10,cost:11});
+    Object.assign(col, {item_id:0,catalog_nr:1,eta:2,status:3,origin:4,qty:5,brand:6,month:7,year:8,cost:9,invoice_nr:10});
   }
 
   // English → Portuguese month mapping (to match dashboard filters)
@@ -1252,10 +1179,12 @@ function parseCSV(text) {
     const cols = splitLine(line, delim);
     if (cols.length < 10) continue;
 
-    // ── ETA: normalise to ISO YYYY-MM-DD (timezone-safe) ──────────────
-    // Accepts DD/MM/YYYY, D/M/YYYY or already-ISO. Stored as ISO so the
-    // display layer never depends on the browser's local timezone.
-    let eta = toISO(cols[col.eta]);
+    // ── ETA: convert DD/MM/YYYY → YYYY-MM-DD ──────────────────────────
+    let eta = cols[col.eta];
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(eta)) {
+      const [d, m, y] = eta.split('/');
+      eta = `${y}-${m}-${d}`;
+    }
 
     // ── Month: map English → Portuguese abbreviation ───────────────────
     const rawMonth = cols[col.month].toUpperCase();
