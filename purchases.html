@@ -804,24 +804,57 @@ function filterAndRender() {
 // narrow the visible purchase rows down to a single Catalog Nr. + Brand
 // combination. Data comes from STOCK (by 14-digit Item ID) and
 // SALES_BACKORDER (aggregated by Catalog Nr. + Brand).
+// Figures out which single Catalog Nr. + Brand the user is currently
+// looking for. Prefers the combination present in the filtered purchase
+// rows; but when an item has NO purchases at all (only stock and/or
+// sales backorders), falls back to resolving it directly from the
+// STOCK / SALES_BACKORDER datasets using the same search box + Exact
+// match + Brand filter the user already has set.
+function resolveActiveItem() {
+  if (filtered.length) {
+    const catalogs = new Set(filtered.map(r => r[1]));
+    const brands   = new Set(filtered.map(r => r[6]));
+    if (catalogs.size === 1 && brands.size === 1) {
+      return { catalogNr: [...catalogs][0], brand: [...brands][0] };
+    }
+    return null; // multiple distinct items in the purchase results — ambiguous
+  }
+
+  // No purchase rows matched — try resolving from stock/backorder data
+  // using the same search term, so items with zero purchases still work.
+  const q     = document.getElementById('fSearch').value.toLowerCase().trim();
+  const exact = document.getElementById('fExact').checked;
+  const br    = document.getElementById('fBrand').value;
+  if (!q) return null;
+
+  const matchesQuery = (itemId, catalogNr) => {
+    const id  = String(itemId).toLowerCase();
+    const cat = String(catalogNr).toLowerCase();
+    return exact ? (id === q || cat === q) : (id.includes(q) || cat.includes(q));
+  };
+
+  const candidates = new Map();
+  [...STOCK, ...SALES_BACKORDER].forEach(r => {
+    if (matchesQuery(r[0], r[1]) && (!br || r[2] === br)) {
+      candidates.set(r[1] + '␟' + r[2], { catalogNr: r[1], brand: r[2] });
+    }
+  });
+
+  return candidates.size === 1 ? [...candidates.values()][0] : null;
+}
+
 function updateStockSummary() {
   const wrap = document.getElementById('stockSummaryWrap');
   const hint = document.getElementById('stockSummaryHint');
 
-  if (!filtered.length) {
+  const active = resolveActiveItem();
+
+  if (!active) {
     wrap.style.display = 'none';
     hint.style.display = 'block';
-    hint.textContent = 'No purchase records match your filters.';
-    return;
-  }
-
-  const catalogs = new Set(filtered.map(r => r[1]));
-  const brands   = new Set(filtered.map(r => r[6]));
-
-  if (catalogs.size !== 1 || brands.size !== 1) {
-    wrap.style.display = 'none';
-    hint.style.display = 'block';
-    hint.textContent = '📌 Filter by a single Catalog Nr. and Brand (e.g. click a row\'s Catalog Nr., or use search + the Brand filter) to see stock, sales backorder and balance for that item.';
+    hint.textContent = filtered.length
+      ? '📌 Filter by a single Catalog Nr. and Brand (e.g. click a row\'s Catalog Nr., or use search + the Brand filter) to see stock, sales backorder and balance for that item.'
+      : '📌 No purchase, stock or sales backorder records match this search.';
     return;
   }
 
@@ -832,8 +865,7 @@ function updateStockSummary() {
     return;
   }
 
-  const catalogNr = [...catalogs][0];
-  const brand     = [...brands][0];
+  const { catalogNr, brand } = active;
 
   const stockRows  = STOCK.filter(r => r[1] === catalogNr && r[2] === brand);
   const stockTotal = stockRows.reduce((s,r) => s + Number(r[3] || 0), 0);
@@ -843,6 +875,10 @@ function updateStockSummary() {
 
   const balance = stockTotal - backTotal;
 
+  // Rows already in `filtered` (if any) already belong to this exact
+  // Catalog Nr. + Brand, since resolveActiveItem() only returns them
+  // when they're homogeneous. If there are no purchases at all for this
+  // item, this simply — and correctly — comes out to 0.
   const transitTotal = filtered
     .filter(r => r[3] === 'Transit')
     .reduce((s,r) => s + Number(r[5] || 0), 0);
