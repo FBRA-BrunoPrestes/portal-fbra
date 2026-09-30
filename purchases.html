@@ -24,6 +24,8 @@
     --muted:          #85959C;
     --transit-color:  #1aad9a;
     --backorder-color:#D32F2F;
+    --risk-color:     #c07800;
+    --risk-bg:        rgba(192,120,0,0.08);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'Inter', 'Segoe UI', sans-serif; font-size: 14px; min-height: 100vh; }
@@ -151,6 +153,8 @@
 
   /* TABLE */
   .table-wrap { padding:12px 32px 0;overflow-x:auto; }
+  .risk-legend { display:flex; align-items:center; gap:8px; padding:8px 14px; margin-bottom:10px; background:var(--surface); border:1px solid var(--border); border-radius:8px; font-size:11px; color:var(--muted); }
+  .risk-legend-swatch { width:12px; height:12px; border-radius:3px; background:var(--risk-bg); border-left:3px solid var(--risk-color); flex-shrink:0; }
   table { width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden; }
   thead { background:var(--fersa-origin); }
   thead th { padding:11px 14px;text-align:left;font-size:10px;font-weight:700;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:1px;cursor:pointer;user-select:none;white-space:nowrap;transition:color .15s; }
@@ -161,6 +165,8 @@
   tbody tr { border-bottom:1px solid var(--border);transition:background .1s; }
   tbody tr:last-child { border-bottom:none; }
   tbody tr:hover { background:rgba(0,169,255,.04); }
+  tbody tr.risk-row { background:var(--risk-bg); border-left:3px solid var(--risk-color); cursor:help; }
+  tbody tr.risk-row td:first-child { padding-left:11px; }
   tbody td { padding:10px 14px;white-space:nowrap; }
   td.tid { font-family:'Courier New',monospace;font-size:11px;color:var(--muted); }
   td.cat { font-weight:500;color:var(--fersa-origin); }
@@ -523,6 +529,10 @@
 <div class="stock-summary-hint" id="stockSummaryHint" style="display:none"></div>
 
 <div class="table-wrap">
+  <div class="risk-legend">
+    <span class="risk-legend-swatch"></span>
+    Rows highlighted in yellow indicate items with a potential risk of delay.
+  </div>
   <table>
     <thead><tr>
       <th data-col="0" onclick="srt(0)">Item ID <span class="si">↕</span></th>
@@ -758,7 +768,7 @@ function renderTable() {
 
   document.getElementById('noRes').style.display = 'none';
   tbody.innerHTML = rows.map(r => `
-    <tr>
+    <tr${r[11] ? ' class="risk-row" title="High risk of delay"' : ''}>
       <td class="tid clickable" onclick='filterByCell(${JSON.stringify(r[0])}, "id")' title="Filter by this Item ID">${r[0]}</td>
       <td class="cat clickable" onclick='filterByCell(${JSON.stringify(r[1])}, "cat")' title="Filter by this Catalog Nr.">${r[1]}</td>
       <td class="eta ${etaClass(r[2])}">${fmtDate(r[2])}</td>
@@ -1203,6 +1213,11 @@ function parseCSV(text) {
     Object.assign(col, {item_id:0,catalog_nr:1,eta:2,status:3,origin:4,qty:5,brand:6,month:7,year:8,cost:9,invoice_nr:10});
   }
 
+  // delay_risk is a NEW, OPTIONAL column. Detected separately so that its
+  // absence in older purchases.csv files never triggers the positional
+  // fallback above for the required columns.
+  const delayRiskCol = header.findIndex(h => /delay.?risk/i.test(h));
+
   // English → Portuguese month mapping (to match dashboard filters)
   const MONTH_MAP = {
     JAN:'JAN', FEB:'FEV', MAR:'MAR', APR:'ABR', MAY:'MAI', JUN:'JUN',
@@ -1239,6 +1254,9 @@ function parseCSV(text) {
     // ── Invoice number (Column K) — empty for Backorder, present for Transit ──
     const invoice = (cols[col.invoice_nr] || '').trim();
 
+    // ── Delay risk: "Yes" (case-insensitive) → true. Absent column → false ──
+    const delayRisk = delayRiskCol >= 0 ? /^y(es)?$/i.test((cols[delayRiskCol] || '').trim()) : false;
+
     rows.push([
       cols[col.item_id],
       cols[col.catalog_nr],
@@ -1250,7 +1268,8 @@ function parseCSV(text) {
       month,
       parseInt(cols[col.year], 10) || 0,
       cost,
-      invoice
+      invoice,
+      delayRisk
     ]);
   }
   return rows;
