@@ -559,7 +559,10 @@ function fmtCurrency(n) {
 function fmtDate(iso) {
   if (!iso) return '';
   const [y,m,d] = String(iso).split('-');
-  const month = new Date(Date.UTC(Number(y), Number(m)-1, Number(d))).toLocaleString('en-US', { month:'short' });
+  // timeZone:'UTC' is required: the date is built at UTC midnight, and in
+  // Brazil (UTC-3) that is still the previous day, which shifted the 1st of
+  // every month into the previous month (e.g. Oct 01 shown as "Sep 01").
+  const month = new Date(Date.UTC(Number(y), Number(m)-1, Number(d))).toLocaleString('en-US', { month:'short', timeZone:'UTC' });
   return `${month} ${String(Number(d)).padStart(2,'0')}, ${y}`;
 }
 function etaClass(eta) {
